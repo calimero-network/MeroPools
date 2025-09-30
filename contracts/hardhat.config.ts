@@ -28,9 +28,11 @@ const config: HardhatUserConfig = {
         initialIndex: 0,
       },
       gasPayer: {
-        gasPayerServiceUrl: process.env.GAS_PAYER_SERVICE_URL || "https://sponsor-testnet.vechain.energy/by/269",
+        gasPayerServiceUrl:
+          process.env.GAS_PAYER_SERVICE_URL ||
+          "https://sponsor-testnet.vechain.energy/by/269",
       },
-    },
+    } as any,
   },
 };
 
