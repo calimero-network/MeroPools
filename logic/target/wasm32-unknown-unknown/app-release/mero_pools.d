@@ -1,1 +1,0 @@
-/Users/ronitchawla/Developer/Calimero/MeroPools/logic/target/wasm32-unknown-unknown/app-release/mero_pools.wasm: /Users/ronitchawla/Developer/Calimero/MeroPools/logic/src/lib.rs /Users/ronitchawla/Developer/Calimero/MeroPools/logic/src/types.rs
