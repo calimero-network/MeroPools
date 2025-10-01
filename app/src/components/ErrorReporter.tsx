@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef } from "react";
 
 type ReporterProps = {
@@ -8,10 +6,10 @@ type ReporterProps = {
   reset?: () => void;
 };
 
-export default function ErrorReporter({ error, reset }: ReporterProps) {
+export default function ErrorReporter({ error }: ReporterProps) {
   /* ─ instrumentation shared by every route ─ */
   const lastOverlayMsg = useRef("");
-  const pollRef = useRef<NodeJS.Timeout>();
+  const pollRef = useRef<number | null>(null);
 
   useEffect(() => {
     const inIframe = window.parent !== window;
@@ -63,12 +61,14 @@ export default function ErrorReporter({ error, reset }: ReporterProps) {
 
     window.addEventListener("error", onError);
     window.addEventListener("unhandledrejection", onReject);
-    pollRef.current = setInterval(pollOverlay, 1000);
+    pollRef.current = window.setInterval(pollOverlay, 1000);
 
     return () => {
       window.removeEventListener("error", onError);
       window.removeEventListener("unhandledrejection", onReject);
-      pollRef.current && clearInterval(pollRef.current);
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+      }
     };
   }, []);
 
@@ -108,7 +108,7 @@ export default function ErrorReporter({ error, reset }: ReporterProps) {
             </p>
           </div>
           <div className="space-y-2">
-            {process.env.NODE_ENV === "development" && (
+            {import.meta.env.DEV && (
               <details className="mt-4 text-left">
                 <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
                   Error details
