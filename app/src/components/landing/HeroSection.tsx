@@ -1,21 +1,24 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { ArrowRight, Sparkles } from "lucide-react"
-import { motion } from "framer-motion"
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 export default function HeroSection() {
+  const navigate = useNavigate();
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 sm:px-6 lg:px-8">
       {/* Animated Background */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-br from-[#0e1011] via-[#1a1d1f] to-[#0e1011]" />
-        
+
         {/* Neon Grid */}
         <div className="absolute inset-0 opacity-20">
           <div className="h-full w-full bg-[linear-gradient(to_right,#a9ff1f22_1px,transparent_1px),linear-gradient(to_bottom,#a9ff1f22_1px,transparent_1px)] bg-[size:4rem_4rem]" />
         </div>
-        
+
         {/* Glowing Orbs */}
         <motion.div
           className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px]"
@@ -52,7 +55,9 @@ export default function HeroSection() {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/5 mb-8"
         >
           <Sparkles className="w-4 h-4 text-primary" />
-          <span className="text-sm font-medium text-primary">Powered by Calimero + VeChain</span>
+          <span className="text-sm font-medium text-primary">
+            Powered by Calimero + VeChain
+          </span>
         </motion.div>
 
         <motion.h1
@@ -72,7 +77,8 @@ export default function HeroSection() {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="text-lg sm:text-xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed"
         >
-          A Calimero-powered dark pool on VeChain — bringing institutional-grade privacy to DeFi trading.
+          A Calimero-powered dark pool on VeChain — bringing institutional-grade
+          privacy to DeFi trading.
         </motion.p>
 
         <motion.div
@@ -84,6 +90,7 @@ export default function HeroSection() {
           <Button
             size="lg"
             className="neon-glow bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 py-6 group"
+            onClick={() => navigate("/dashboard")}
           >
             Launch App
             <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -114,10 +121,12 @@ export default function HeroSection() {
           </div>
           <div className="col-span-2 sm:col-span-1">
             <div className="text-3xl font-bold text-primary mb-2">Zero</div>
-            <div className="text-sm text-muted-foreground">Front-Running Risk</div>
+            <div className="text-sm text-muted-foreground">
+              Front-Running Risk
+            </div>
           </div>
         </motion.div>
       </div>
     </section>
-  )
+  );
 }
