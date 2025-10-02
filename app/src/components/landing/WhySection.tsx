@@ -1,8 +1,6 @@
-"use client"
-
-import { Card } from "@/components/ui/card"
-import { motion } from "framer-motion"
-import { Eye, Rocket } from "lucide-react"
+import { Card } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { Eye, Rocket } from "lucide-react";
 
 export default function WhySection() {
   return (
@@ -35,20 +33,35 @@ export default function WhySection() {
                 <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                   <Eye className="w-8 h-8 text-primary" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4">Calimero Private Contexts</h3>
+                <h3 className="text-2xl font-bold mb-4">
+                  Calimero Private Contexts
+                </h3>
               </div>
               <ul className="space-y-4 text-muted-foreground">
                 <li className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                  <span><strong className="text-foreground">Confidential Computing:</strong> Your trade data never leaves the secure private context</span>
+                  <span>
+                    <strong className="text-foreground">
+                      Confidential Computing:
+                    </strong>{" "}
+                    Your trade data never leaves the secure private context
+                  </span>
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                  <span><strong className="text-foreground">Private Data Storage:</strong> All sensitive information encrypted and isolated</span>
+                  <span>
+                    <strong className="text-foreground">
+                      Private Data Storage:
+                    </strong>{" "}
+                    All sensitive information encrypted and isolated
+                  </span>
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                  <span><strong className="text-foreground">Zero Knowledge:</strong> Trade without revealing your strategy or position</span>
+                  <span>
+                    <strong className="text-foreground">Zero Knowledge:</strong>{" "}
+                    Trade without revealing your strategy or position
+                  </span>
                 </li>
               </ul>
             </Card>
@@ -65,20 +78,36 @@ export default function WhySection() {
                 <div className="w-16 h-16 rounded-xl bg-chart-2/10 flex items-center justify-center mb-4">
                   <Rocket className="w-8 h-8 text-chart-2" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4">VeChain Settlement Layer</h3>
+                <h3 className="text-2xl font-bold mb-4">
+                  VeChain Settlement Layer
+                </h3>
               </div>
               <ul className="space-y-4 text-muted-foreground">
                 <li className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-chart-2 mt-2 flex-shrink-0" />
-                  <span><strong className="text-foreground">Real Settlement:</strong> Actual on-chain finality for every trade</span>
+                  <span>
+                    <strong className="text-foreground">
+                      Real Settlement:
+                    </strong>{" "}
+                    Actual on-chain finality for every trade
+                  </span>
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-chart-2 mt-2 flex-shrink-0" />
-                  <span><strong className="text-foreground">Lightning Fast:</strong> Sub-2-second block times for instant execution</span>
+                  <span>
+                    <strong className="text-foreground">Lightning Fast:</strong>{" "}
+                    Sub-2-second block times for instant execution
+                  </span>
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-chart-2 mt-2 flex-shrink-0" />
-                  <span><strong className="text-foreground">Enterprise Grade:</strong> Trusted by global enterprises for mission-critical operations</span>
+                  <span>
+                    <strong className="text-foreground">
+                      Enterprise Grade:
+                    </strong>{" "}
+                    Trusted by global enterprises for mission-critical
+                    operations
+                  </span>
                 </li>
               </ul>
             </Card>
@@ -86,5 +115,5 @@ export default function WhySection() {
         </div>
       </div>
     </section>
-  )
+  );
 }
