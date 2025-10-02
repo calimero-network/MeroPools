@@ -1,14 +1,30 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useCalimero } from "@calimero-network/calimero-client";
 import DashboardNav from "@/components/dashboard/DashboardNav";
 import TradeTab from "@/components/dashboard/TradeTab";
 import OrderHistoryTab from "@/components/dashboard/OrderHistoryTab";
 import PoolsTab from "@/components/dashboard/PoolsTab";
+import { DefaultContextService } from "@/services/DefaultContextService";
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<"trade" | "history" | "pools">(
     "trade"
   );
+  const [userId, setUserId] = useState<string | undefined>(undefined);
+
+  const { app } = useCalimero();
+
+  useEffect(() => {
+    if (app) {
+      const defaultContextService = DefaultContextService.getInstance(app);
+      const defaultContext = defaultContextService.getStoredDefaultContext();
+
+      if (defaultContext && defaultContext.executorId) {
+        setUserId(defaultContext.executorId);
+      }
+    }
+  }, [app]);
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -75,12 +91,18 @@ export default function DashboardPage() {
 
       {/* Content */}
       <div className="relative z-10">
-        <DashboardNav activeTab={activeTab} setActiveTab={setActiveTab} />
+        <DashboardNav
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          app={app}
+        />
 
         <main className="pt-20 pb-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
-            {activeTab === "trade" && <TradeTab />}
-            {activeTab === "history" && <OrderHistoryTab />}
+            {activeTab === "trade" && <TradeTab app={app} />}
+            {activeTab === "history" && (
+              <OrderHistoryTab app={app} userId={userId} />
+            )}
             {activeTab === "pools" && <PoolsTab />}
           </div>
         </main>
