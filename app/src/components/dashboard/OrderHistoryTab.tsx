@@ -21,10 +21,9 @@ type OrderStatus =
 
 interface OrderHistoryTabProps {
   app?: unknown;
-  userId?: string;
 }
 
-export default function OrderHistoryTab({ app, userId }: OrderHistoryTabProps) {
+export default function OrderHistoryTab({ app }: OrderHistoryTabProps) {
   const [filter, setFilter] = useState<"all" | OrderStatus>("all");
   const [orders, setOrders] = useState<UserOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,7 +31,9 @@ export default function OrderHistoryTab({ app, userId }: OrderHistoryTabProps) {
 
   useEffect(() => {
     const fetchOrders = async () => {
-      if (!userId) {
+      const storedUserId = localStorage.getItem("defaultContextUserID");
+
+      if (!storedUserId) {
         setError("User ID not available. Please connect to Calimero.");
         setIsLoading(false);
         return;
@@ -43,7 +44,7 @@ export default function OrderHistoryTab({ app, userId }: OrderHistoryTabProps) {
         setError(null);
 
         const api = new ClientApiDataSource(app as never);
-        const response = await api.getUserOrders(userId);
+        const response = await api.getUserOrders(storedUserId);
 
         console.log("getUserOrders response:", response);
 
@@ -51,15 +52,18 @@ export default function OrderHistoryTab({ app, userId }: OrderHistoryTabProps) {
           setError(response.error.message || "Failed to fetch orders");
         } else {
           const ordersData = response.data;
+
           if (Array.isArray(ordersData)) {
             setOrders(ordersData);
           } else if (ordersData && typeof ordersData === "object") {
-            console.log("Orders data is not an array, received:", ordersData);
-
             const dataObj = ordersData as Record<string, unknown>;
-            if ("orders" in dataObj && Array.isArray(dataObj.orders)) {
+
+            if ("output" in dataObj && Array.isArray(dataObj.output)) {
+              setOrders(dataObj.output as UserOrder[]);
+            } else if ("orders" in dataObj && Array.isArray(dataObj.orders)) {
               setOrders(dataObj.orders as UserOrder[]);
             } else {
+              console.warn("Unexpected orders data format:", ordersData);
               setOrders([]);
             }
           } else {
@@ -78,7 +82,7 @@ export default function OrderHistoryTab({ app, userId }: OrderHistoryTabProps) {
     };
 
     fetchOrders();
-  }, [app, userId]);
+  }, [app]);
 
   const filteredOrders =
     filter === "all"
