@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,17 +31,36 @@ export default function TradeTab({ app }: TradeTabProps) {
   const [poolMode, setPoolMode] = useState<"auto" | "manual">("auto");
   const [selectedPool, setSelectedPool] = useState("pool-1");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userId, setUserId] = useState<string | undefined>(undefined);
 
   const { toast } = useToast();
 
   // Initialize API client with app context
   const api = new ClientApiDataSource(app as never);
 
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("defaultContextUserID");
+
+    if (storedUserId) {
+      setUserId(storedUserId);
+    } else {
+      console.warn("TradeTab - No defaultContextUserID found in localStorage");
+    }
+  }, []);
+
   // 1 B3TR = $0.0803 USD (demo conversion)
   const marketPrice = 0.0803;
 
   const handleSubmitOrder = async () => {
-    // Validation
+    if (!userId) {
+      toast({
+        variant: "destructive",
+        title: "User Not Connected",
+        description: "Please connect to Calimero to submit orders",
+      });
+      return;
+    }
+
     if (!amountIn || parseFloat(amountIn) <= 0) {
       toast({
         variant: "destructive",
@@ -78,13 +97,11 @@ export default function TradeTab({ app }: TradeTabProps) {
     });
 
     try {
-      // Calculate amounts and prices
       const amountDepositedWei = (parseFloat(amountIn) * 1e18).toString();
       const effectivePrice =
         priceMode === "market" ? marketPrice : parseFloat(customPrice);
       const expectedPriceWei = (effectivePrice * 1e18).toString();
 
-      // Generate order commitment
       const commitment = generateOrderCommitment({
         token: tokenIn,
         amount: amountDepositedWei,
@@ -95,8 +112,8 @@ export default function TradeTab({ app }: TradeTabProps) {
         timeLimit: parseInt(timeLimit, 10),
       });
 
-      // Submit order to Calimero
       const response = await api.submitOrder(
+        userId,
         commitment,
         tokenIn,
         amountDepositedWei,
@@ -108,7 +125,6 @@ export default function TradeTab({ app }: TradeTabProps) {
         parseInt(timeLimit, 10)
       );
 
-      // Dismiss loading toast
       loadingToast.dismiss();
 
       if (response.error) {
@@ -117,8 +133,25 @@ export default function TradeTab({ app }: TradeTabProps) {
           title: "Order Failed",
           description: response.error.message || "Failed to submit order",
         });
-      } else {
-        // Show success toast with order ID
+      } else if (response.data) {
+        const responseData = response.data;
+        let orderId = "Unknown";
+        if (typeof responseData === "string") {
+          orderId = responseData;
+        } else if (typeof responseData === "object" && responseData !== null) {
+          const dataObj = responseData as Record<string, unknown>;
+
+          if (dataObj.output) {
+            orderId = String(dataObj.output);
+          } else if (dataObj.result) {
+            orderId = String(dataObj.result);
+          } else if (dataObj.success) {
+            orderId = String(dataObj.success);
+          } else {
+            orderId = JSON.stringify(responseData);
+          }
+        }
+
         toast({
           variant: "success",
           title: "Order Submitted Successfully!",
@@ -129,13 +162,13 @@ export default function TradeTab({ app }: TradeTabProps) {
                 <span className="font-semibold">Order ID:</span>
               </div>
               <div className="flex items-center justify-between gap-2 bg-background/50 rounded p-2">
-                <span className="text-xs font-mono">{response.data}</span>
+                <span className="text-xs font-mono">{orderId}</span>
                 <Button
                   size="sm"
                   variant="ghost"
                   className="h-6 w-6 p-0"
                   onClick={() => {
-                    navigator.clipboard.writeText(response.data as string);
+                    navigator.clipboard.writeText(orderId);
                     toast({
                       title: "Copied!",
                       description: "Order ID copied to clipboard",
@@ -152,14 +185,12 @@ export default function TradeTab({ app }: TradeTabProps) {
           ),
         });
 
-        // Reset form
         setAmountIn("");
         setCustomPrice("");
       }
     } catch (error) {
       console.error("Error submitting order:", error);
 
-      // Dismiss loading toast
       loadingToast.dismiss();
 
       const errorMessage =
