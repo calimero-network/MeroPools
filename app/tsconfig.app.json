@@ -21,11 +21,13 @@
     "noEmit": true,
     "outDir": "build",
     "jsx": "react-jsx",
+    "jsxImportSource": "react",
 
     /* Path mapping */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "react": ["./node_modules/@types/react"]
     },
 
     /* Linting */
