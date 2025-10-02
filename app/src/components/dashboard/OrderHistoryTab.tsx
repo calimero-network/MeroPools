@@ -1,21 +1,30 @@
-"use client"
+import { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { ExternalLink, Filter } from "lucide-react";
+import { motion } from "framer-motion";
 
-import { useState } from "react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { ExternalLink, Filter } from "lucide-react"
-import { motion } from "framer-motion"
-
-type OrderStatus = "Created" | "Deposited" | "Matched" | "Completed" | "Cancelled"
+type OrderStatus =
+  | "Created"
+  | "Deposited"
+  | "Matched"
+  | "Completed"
+  | "Cancelled";
 
 interface Order {
-  id: string
-  tokenIn: string
-  tokenOut: string
-  amount: number
-  status: OrderStatus
-  txHash?: string
-  timestamp: string
+  id: string;
+  tokenIn: string;
+  tokenOut: string;
+  amount: number;
+  status: OrderStatus;
+  txHash?: string;
+  timestamp: string;
 }
 
 const mockOrders: Order[] = [
@@ -52,41 +61,45 @@ const mockOrders: Order[] = [
     status: "Created",
     timestamp: "2025-09-30 15:20",
   },
-]
+];
 
 export default function OrderHistoryTab() {
-  const [filter, setFilter] = useState<"all" | OrderStatus>("all")
+  const [filter, setFilter] = useState<"all" | OrderStatus>("all");
 
-  const filteredOrders = filter === "all" 
-    ? mockOrders 
-    : mockOrders.filter(order => order.status === filter)
+  const filteredOrders =
+    filter === "all"
+      ? mockOrders
+      : mockOrders.filter((order) => order.status === filter);
 
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {
       case "Completed":
-        return "bg-green-500/20 text-green-500 border-green-500/30"
+        return "bg-green-500/20 text-green-500 border-green-500/30";
       case "Matched":
-        return "bg-blue-500/20 text-blue-500 border-blue-500/30"
+        return "bg-blue-500/20 text-blue-500 border-blue-500/30";
       case "Deposited":
-        return "bg-yellow-500/20 text-yellow-500 border-yellow-500/30"
+        return "bg-yellow-500/20 text-yellow-500 border-yellow-500/30";
       case "Created":
-        return "bg-primary/20 text-primary border-primary/30"
+        return "bg-primary/20 text-primary border-primary/30";
       case "Cancelled":
-        return "bg-red-500/20 text-red-500 border-red-500/30"
+        return "bg-red-500/20 text-red-500 border-red-500/30";
       default:
-        return "bg-muted text-muted-foreground"
+        return "bg-muted text-muted-foreground";
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Order History</h2>
-        
+
         {/* Filter */}
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-muted-foreground" />
-          <Select value={filter} onValueChange={(value) => setFilter(value as any)}>
+          <Select
+            value={filter}
+            onValueChange={(value) => setFilter(value as any)}
+          >
             <SelectTrigger className="w-40">
               <SelectValue />
             </SelectTrigger>
@@ -107,12 +120,24 @@ export default function OrderHistoryTab() {
         <table className="w-full">
           <thead className="bg-muted/50 border-b border-border">
             <tr>
-              <th className="text-left py-4 px-6 text-sm font-semibold text-muted-foreground">Order ID</th>
-              <th className="text-left py-4 px-6 text-sm font-semibold text-muted-foreground">Tokens</th>
-              <th className="text-right py-4 px-6 text-sm font-semibold text-muted-foreground">Amount</th>
-              <th className="text-center py-4 px-6 text-sm font-semibold text-muted-foreground">Status</th>
-              <th className="text-left py-4 px-6 text-sm font-semibold text-muted-foreground">Timestamp</th>
-              <th className="text-center py-4 px-6 text-sm font-semibold text-muted-foreground">Tx Hash</th>
+              <th className="text-left py-4 px-6 text-sm font-semibold text-muted-foreground">
+                Order ID
+              </th>
+              <th className="text-left py-4 px-6 text-sm font-semibold text-muted-foreground">
+                Tokens
+              </th>
+              <th className="text-right py-4 px-6 text-sm font-semibold text-muted-foreground">
+                Amount
+              </th>
+              <th className="text-center py-4 px-6 text-sm font-semibold text-muted-foreground">
+                Status
+              </th>
+              <th className="text-left py-4 px-6 text-sm font-semibold text-muted-foreground">
+                Timestamp
+              </th>
+              <th className="text-center py-4 px-6 text-sm font-semibold text-muted-foreground">
+                Tx Hash
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -132,7 +157,9 @@ export default function OrderHistoryTab() {
                     <span className="font-semibold">{order.tokenOut}</span>
                   </div>
                 </td>
-                <td className="py-4 px-6 text-right font-semibold">{order.amount}</td>
+                <td className="py-4 px-6 text-right font-semibold">
+                  {order.amount}
+                </td>
                 <td className="py-4 px-6">
                   <div className="flex justify-center">
                     <Badge className={getStatusColor(order.status)}>
@@ -140,7 +167,9 @@ export default function OrderHistoryTab() {
                     </Badge>
                   </div>
                 </td>
-                <td className="py-4 px-6 text-sm text-muted-foreground">{order.timestamp}</td>
+                <td className="py-4 px-6 text-sm text-muted-foreground">
+                  {order.timestamp}
+                </td>
                 <td className="py-4 px-6">
                   {order.txHash ? (
                     <a
@@ -153,7 +182,9 @@ export default function OrderHistoryTab() {
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   ) : (
-                    <span className="text-muted-foreground text-sm text-center block">—</span>
+                    <span className="text-muted-foreground text-sm text-center block">
+                      —
+                    </span>
                   )}
                 </td>
               </motion.tr>
@@ -173,8 +204,12 @@ export default function OrderHistoryTab() {
             className="bg-card border border-border rounded-lg p-4 space-y-3"
           >
             <div className="flex items-center justify-between">
-              <span className="font-mono text-sm font-semibold">{order.id}</span>
-              <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
+              <span className="font-mono text-sm font-semibold">
+                {order.id}
+              </span>
+              <Badge className={getStatusColor(order.status)}>
+                {order.status}
+              </Badge>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <span className="font-semibold">{order.tokenIn}</span>
@@ -206,5 +241,5 @@ export default function OrderHistoryTab() {
         </div>
       )}
     </div>
-  )
+  );
 }
