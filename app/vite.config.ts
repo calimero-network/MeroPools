@@ -8,6 +8,17 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": "/src",
+      buffer: "buffer",
+    },
+  },
+  define: {
+    global: "globalThis",
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      define: {
+        global: "globalThis",
+      },
     },
   },
 });
