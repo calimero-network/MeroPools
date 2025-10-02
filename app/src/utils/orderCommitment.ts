@@ -1,42 +1,41 @@
 /**
  * Order Commitment Generator for MeroPools Demo
  *
- * IMPORTANT: The Rust smart contract expects byte arrays [u8; 32] for hash fields,
- * not base58-encoded strings. All hash fields are now returned as number[] arrays.
- *
- * In production, this should use proper cryptographic libraries and ZK proofs.
- * For demo purposes, we use simplified hashing and random generation.
+ * IMPORTANT: For demo purposes, we store order data in plaintext within the commitment.
+ * In production, this would use proper encryption and ZK proofs.
+ 
  */
 
 import { OrderCommitment } from "../api/clientApi";
 
-/**
- * Simple hash function for demo (replace with proper crypto in production)
- * Returns byte array [u8; 32] matching Rust contract expectations
- */
-function simpleHash(data: string): number[] {
+function stringToBytes(str: string): number[] {
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(str);
+  return Array.from(bytes);
+}
+
+function createHash32(data: string): number[] {
   const encoder = new TextEncoder();
   const bytes = encoder.encode(data);
-  // Pad or truncate to exactly 32 bytes to match [u8; 32] in Rust
+
   const hash = new Uint8Array(32);
-  hash.set(bytes.slice(0, 32));
+  for (let i = 0; i < bytes.length; i++) {
+    hash[i % 32] ^= bytes[i];
+  }
+
+  for (let i = bytes.length; i < 32; i++) {
+    hash[i] = (hash[i % bytes.length] + i) & 0xff;
+  }
+
   return Array.from(hash);
 }
 
 /**
- * Generate a random 32-byte array [u8; 32]
- */
-function generateRandomBytes32(): number[] {
-  const bytes = crypto.getRandomValues(new Uint8Array(32));
-  return Array.from(bytes);
-}
-
-/**
- * Encrypt order details (simplified for demo)
- * In production: Use proper encryption with user's private key
+ * Store order details as plaintext JSON in bytes (for demo)
+ * In production: Proper encryption with user's private key
  * Returns byte array
  */
-function encryptOrderPayload(orderDetails: {
+function encodeOrderPayload(orderDetails: {
   token: string;
   amount: string;
   expectedToken: string;
@@ -44,11 +43,7 @@ function encryptOrderPayload(orderDetails: {
   vechainAddress: string;
 }): number[] {
   const payload = JSON.stringify(orderDetails);
-  const encoder = new TextEncoder();
-  const payloadBytes = encoder.encode(payload);
-
-  // For demo: return as byte array (in production, encrypt this first)
-  return Array.from(payloadBytes);
+  return stringToBytes(payload);
 }
 
 /**
@@ -66,14 +61,15 @@ export function generateOrderCommitment(orderDetails: {
   spread: number;
   timeLimit: number;
 }): OrderCommitment {
-  const now = Date.now() * 1_000_000; // Convert to nanoseconds
-  const expiry = now + orderDetails.timeLimit * 1_000_000_000; // timeLimit in seconds
+  const now = Date.now() * 1_000_000;
+  const expiry = now + orderDetails.timeLimit * 1_000_000_000;
 
-  // 1. Generate nullifier seed (unique per order) as [u8; 32] array
-  const nullifier_seed = generateRandomBytes32();
+  // 1. Create nullifier seed from order details (deterministic for demo)
+  const nullifierData = `nullifier_${orderDetails.token}_${orderDetails.amount}_${now}`;
+  const nullifier_seed = createHash32(nullifierData);
 
-  // 2. Encrypt order payload as byte array
-  const encrypted_payload = encryptOrderPayload({
+  // 2. Store order payload as plaintext JSON (for demo visibility)
+  const encrypted_payload = encodeOrderPayload({
     token: orderDetails.token,
     amount: orderDetails.amount,
     expectedToken: orderDetails.expectedToken,
@@ -81,19 +77,13 @@ export function generateOrderCommitment(orderDetails: {
     vechainAddress: orderDetails.vechainAddress,
   });
 
-  // 3. Generate proof of funds (demo: random, production: real proof) as [u8; 32] array
-  const proof_of_funds = generateRandomBytes32();
+  // 3. Create proof of funds hash (deterministic for demo)
+  const proofData = `proof_${orderDetails.vechainAddress}_${orderDetails.amount}`;
+  const proof_of_funds = createHash32(proofData);
 
-  // 4. Create commitment hash from all components as [u8; 32] array
-  const commitmentData = JSON.stringify({
-    nullifier_seed,
-    encrypted_payload,
-    proof_of_funds,
-    timestamp: now,
-    expiry,
-  });
-
-  const commitment_hash = simpleHash(commitmentData);
+  // 4. Create commitment hash from all components
+  const commitmentData = `commit_${orderDetails.token}_${orderDetails.amount}_${orderDetails.expectedToken}_${now}`;
+  const commitment_hash = createHash32(commitmentData);
 
   return {
     commitment_hash,
@@ -111,22 +101,17 @@ export function generateOrderCommitment(orderDetails: {
 export function generateMockOrderCommitment(): OrderCommitment {
   return generateOrderCommitment({
     token: "VET",
-    amount: "1000000000000000000", // 1 VET in wei
+    amount: "1000000000000000000",
     expectedToken: "VTHO",
-    expectedPrice: "1000000000000000000", // 1:1 exchange rate
+    expectedPrice: "1000000000000000000",
     vechainAddress: "0x" + "0".repeat(40),
-    spread: 200, // 2% spread (200 basis points)
-    timeLimit: 3600, // 1 hour
+    spread: 200,
+    timeLimit: 3600,
   });
 }
 
-/**
- * Validate order commitment structure
- */
 export function validateOrderCommitment(commitment: OrderCommitment): boolean {
-  // Validate byte arrays
   try {
-    // Check hash fields are exactly 32 bytes
     if (
       !Array.isArray(commitment.commitment_hash) ||
       commitment.commitment_hash.length !== 32
@@ -143,14 +128,12 @@ export function validateOrderCommitment(commitment: OrderCommitment): boolean {
     )
       return false;
 
-    // Check encrypted payload exists
     if (
       !Array.isArray(commitment.encrypted_payload) ||
       commitment.encrypted_payload.length === 0
     )
       return false;
 
-    // Check all bytes are valid (0-255)
     const allBytes = [
       ...commitment.commitment_hash,
       ...commitment.nullifier_seed,
@@ -167,7 +150,6 @@ export function validateOrderCommitment(commitment: OrderCommitment): boolean {
     return false;
   }
 
-  // Check timestamps are valid
   if (commitment.expiry <= commitment.timestamp) return false;
 
   return true;
