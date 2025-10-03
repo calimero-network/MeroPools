@@ -9,20 +9,18 @@ async function main() {
     (await deployer.provider.getBalance(deployer.address)).toString()
   );
 
-  const relayerAddress = deployer.address;
   const DarkPoolSettlement = await ethers.getContractFactory(
     "DarkPoolSettlement"
   );
 
   console.log("Deploying DarkPoolSettlement...");
-  const darkPoolSettlement = await DarkPoolSettlement.deploy(relayerAddress);
+  const darkPoolSettlement = await DarkPoolSettlement.deploy();
   await darkPoolSettlement.waitForDeployment();
 
   console.log(
     "DarkPoolSettlement deployed to:",
     await darkPoolSettlement.getAddress()
   );
-  console.log("Relayer address set to:", relayerAddress);
   console.log("Deployer address:", deployer.address);
 
   const deployedCode = await deployer.provider.getCode(
