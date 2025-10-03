@@ -3,11 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Wallet, BookOpen, ArrowRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 export default function CTASection() {
-  const navigate = useNavigate();
-
   return (
     <section className="py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Background Effects */}
@@ -34,10 +31,9 @@ export default function CTASection() {
             <Button
               size="lg"
               className="neon-glow bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 py-6 group"
-              onClick={() => navigate("/dashboard")}
             >
               <Wallet className="mr-2 w-5 h-5" />
-              Launch App
+              Connect Wallet
               <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
             <Button
