@@ -48,6 +48,7 @@
     "buffer": "^6.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "ethers": "^6.15.0",
     "framer-motion": "^12.23.22",
     "lucide-react": "^0.544.0",
     "react": "^18.3.1",
