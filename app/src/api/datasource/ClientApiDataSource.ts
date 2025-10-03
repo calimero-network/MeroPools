@@ -13,7 +13,6 @@ import type {
   UserId,
 } from "../clientApi";
 import { ClientMethod } from "../clientApi";
-import { DefaultContextService } from "../../services/DefaultContextService";
 
 const RequestConfig = { timeout: 30000 };
 
@@ -75,17 +74,6 @@ export class ClientApiDataSource implements ClientApi {
   ): ApiResponse<string> {
     try {
       if (this.app) {
-        const defaultContextService = DefaultContextService.getInstance(
-          this.app
-        );
-        const defaultContext = defaultContextService.getStoredDefaultContext();
-
-        if (!defaultContext) {
-          throw new Error(
-            "Default context not found. Please ensure you are connected to Calimero and have a default context initialized."
-          );
-        }
-
         const params = {
           commitment,
           token_deposited,
@@ -99,7 +87,7 @@ export class ClientApiDataSource implements ClientApi {
         };
 
         const result = await this.app.execute(
-          defaultContext,
+          this.app.getContext(),
           ClientMethod.SUBMIT_ORDER,
           params
         );
@@ -109,22 +97,7 @@ export class ClientApiDataSource implements ClientApi {
           error: null,
         };
       } else {
-        const defaultContextService = DefaultContextService.getInstance(null);
-        const defaultContext = defaultContextService.getStoredDefaultContext();
-
-        let authConfig;
-        if (defaultContext) {
-          const baseAuthConfig = getAuthConfig();
-          authConfig = {
-            ...baseAuthConfig,
-            contextId: defaultContext.contextId,
-            executorPublicKey:
-              defaultContext.memberPublicKey ||
-              baseAuthConfig.executorPublicKey,
-          };
-        } else {
-          authConfig = getAuthConfig();
-        }
+        const authConfig = getAuthConfig();
 
         const argsJson = {
           commitment,
@@ -165,21 +138,10 @@ export class ClientApiDataSource implements ClientApi {
   async cancelOrder(order_id: string): ApiResponse<void> {
     try {
       if (this.app) {
-        const defaultContextService = DefaultContextService.getInstance(
-          this.app
-        );
-        const defaultContext = defaultContextService.getStoredDefaultContext();
-
-        if (!defaultContext) {
-          throw new Error(
-            "Default context not found. Please ensure you are connected to Calimero and have a default context initialized."
-          );
-        }
-
         const params = { order_id };
 
         await this.app.execute(
-          defaultContext,
+          this.app.getContext(),
           ClientMethod.CANCEL_ORDER,
           params
         );
@@ -189,23 +151,7 @@ export class ClientApiDataSource implements ClientApi {
           error: null,
         };
       } else {
-        const defaultContextService = DefaultContextService.getInstance(null);
-        const defaultContext = defaultContextService.getStoredDefaultContext();
-
-        let authConfig;
-        if (defaultContext) {
-          const baseAuthConfig = getAuthConfig();
-          authConfig = {
-            ...baseAuthConfig,
-            contextId: defaultContext.contextId,
-            executorPublicKey:
-              defaultContext.memberPublicKey ||
-              baseAuthConfig.executorPublicKey,
-          };
-        } else {
-          authConfig = getAuthConfig();
-        }
-
+        const authConfig = getAuthConfig();
         const argsJson = { order_id };
 
         await rpcClient.execute({
@@ -235,19 +181,8 @@ export class ClientApiDataSource implements ClientApi {
   async joinMatchingPool(): ApiResponse<void> {
     try {
       if (this.app) {
-        const defaultContextService = DefaultContextService.getInstance(
-          this.app
-        );
-        const defaultContext = defaultContextService.getStoredDefaultContext();
-
-        if (!defaultContext) {
-          throw new Error(
-            "Default context not found. Please ensure you are connected to Calimero and have a default context initialized."
-          );
-        }
-
         await this.app.execute(
-          defaultContext,
+          this.app.getContext(),
           ClientMethod.JOIN_MATCHING_POOL,
           {}
         );
@@ -257,22 +192,7 @@ export class ClientApiDataSource implements ClientApi {
           error: null,
         };
       } else {
-        const defaultContextService = DefaultContextService.getInstance(null);
-        const defaultContext = defaultContextService.getStoredDefaultContext();
-
-        let authConfig;
-        if (defaultContext) {
-          const baseAuthConfig = getAuthConfig();
-          authConfig = {
-            ...baseAuthConfig,
-            contextId: defaultContext.contextId,
-            executorPublicKey:
-              defaultContext.memberPublicKey ||
-              baseAuthConfig.executorPublicKey,
-          };
-        } else {
-          authConfig = getAuthConfig();
-        }
+        const authConfig = getAuthConfig();
 
         await rpcClient.execute({
           ...authConfig,
@@ -301,19 +221,8 @@ export class ClientApiDataSource implements ClientApi {
   async runBatchMatching(): ApiResponse<string> {
     try {
       if (this.app) {
-        const defaultContextService = DefaultContextService.getInstance(
-          this.app
-        );
-        const defaultContext = defaultContextService.getStoredDefaultContext();
-
-        if (!defaultContext) {
-          throw new Error(
-            "Default context not found. Please ensure you are connected to Calimero and have a default context initialized."
-          );
-        }
-
         const result = await this.app.execute(
-          defaultContext,
+          this.app.getContext(),
           ClientMethod.RUN_BATCH_MATCHING,
           {}
         );
@@ -323,22 +232,7 @@ export class ClientApiDataSource implements ClientApi {
           error: null,
         };
       } else {
-        const defaultContextService = DefaultContextService.getInstance(null);
-        const defaultContext = defaultContextService.getStoredDefaultContext();
-
-        let authConfig;
-        if (defaultContext) {
-          const baseAuthConfig = getAuthConfig();
-          authConfig = {
-            ...baseAuthConfig,
-            contextId: defaultContext.contextId,
-            executorPublicKey:
-              defaultContext.memberPublicKey ||
-              baseAuthConfig.executorPublicKey,
-          };
-        } else {
-          authConfig = getAuthConfig();
-        }
+        const authConfig = getAuthConfig();
 
         const response = await rpcClient.execute({
           ...authConfig,
@@ -370,21 +264,10 @@ export class ClientApiDataSource implements ClientApi {
   ): ApiResponse<void> {
     try {
       if (this.app) {
-        const defaultContextService = DefaultContextService.getInstance(
-          this.app
-        );
-        const defaultContext = defaultContextService.getStoredDefaultContext();
-
-        if (!defaultContext) {
-          throw new Error(
-            "Default context not found. Please ensure you are connected to Calimero and have a default context initialized."
-          );
-        }
-
         const params = { batch_id, tx_hash };
 
         await this.app.execute(
-          defaultContext,
+          this.app.getContext(),
           ClientMethod.SUBMIT_SETTLEMENT_RESULT,
           params
         );
@@ -394,23 +277,7 @@ export class ClientApiDataSource implements ClientApi {
           error: null,
         };
       } else {
-        const defaultContextService = DefaultContextService.getInstance(null);
-        const defaultContext = defaultContextService.getStoredDefaultContext();
-
-        let authConfig;
-        if (defaultContext) {
-          const baseAuthConfig = getAuthConfig();
-          authConfig = {
-            ...baseAuthConfig,
-            contextId: defaultContext.contextId,
-            executorPublicKey:
-              defaultContext.memberPublicKey ||
-              baseAuthConfig.executorPublicKey,
-          };
-        } else {
-          authConfig = getAuthConfig();
-        }
-
+        const authConfig = getAuthConfig();
         const argsJson = { batch_id, tx_hash };
 
         await rpcClient.execute({
@@ -442,38 +309,35 @@ export class ClientApiDataSource implements ClientApi {
 
   async getUserOrders(user_id: UserId): ApiResponse<UserOrder[]> {
     try {
-      // Always use RPC client for query operations
-      const defaultContextService = DefaultContextService.getInstance(
-        this.app || null
-      );
-      const defaultContext = defaultContextService.getStoredDefaultContext();
+      if (this.app) {
+        const params = { user_id };
 
-      let authConfig;
-      if (defaultContext) {
-        const baseAuthConfig = getAuthConfig();
-        authConfig = {
-          ...baseAuthConfig,
-          contextId: defaultContext.contextId,
-          executorPublicKey:
-            defaultContext.memberPublicKey || baseAuthConfig.executorPublicKey,
+        const result = await this.app.query(
+          this.app.getContext(),
+          ClientMethod.GET_USER_ORDERS,
+          params
+        );
+
+        return {
+          data: (result.data || result) as UserOrder[],
+          error: null,
         };
       } else {
-        authConfig = getAuthConfig();
+        const authConfig = getAuthConfig();
+        const argsJson = { user_id };
+
+        const response = await rpcClient.execute({
+          ...authConfig,
+          method: ClientMethod.GET_USER_ORDERS,
+          argsJson,
+          config: RequestConfig,
+        } as unknown as RpcQueryParams<UserOrder[]>);
+
+        return {
+          data: response.result as UserOrder[],
+          error: null,
+        };
       }
-
-      const argsJson = { user_id };
-
-      const response = await rpcClient.execute({
-        ...authConfig,
-        method: ClientMethod.GET_USER_ORDERS,
-        argsJson,
-        config: RequestConfig,
-      } as unknown as RpcQueryParams<UserOrder[]>);
-
-      return {
-        data: response.result as UserOrder[],
-        error: null,
-      };
     } catch (error: unknown) {
       console.error("ClientApiDataSource: Error in getUserOrders:", error);
       return {
@@ -489,21 +353,10 @@ export class ClientApiDataSource implements ClientApi {
   async getBatchResult(batch_id: string): ApiResponse<BatchMatchResult | null> {
     try {
       if (this.app) {
-        const defaultContextService = DefaultContextService.getInstance(
-          this.app
-        );
-        const defaultContext = defaultContextService.getStoredDefaultContext();
-
-        if (!defaultContext) {
-          throw new Error(
-            "Default context not found. Please ensure you are connected to Calimero and have a default context initialized."
-          );
-        }
-
         const params = { batch_id };
 
         const result = await this.app.query(
-          defaultContext,
+          this.app.getContext(),
           ClientMethod.GET_BATCH_RESULT,
           params
         );
@@ -513,23 +366,7 @@ export class ClientApiDataSource implements ClientApi {
           error: null,
         };
       } else {
-        const defaultContextService = DefaultContextService.getInstance(null);
-        const defaultContext = defaultContextService.getStoredDefaultContext();
-
-        let authConfig;
-        if (defaultContext) {
-          const baseAuthConfig = getAuthConfig();
-          authConfig = {
-            ...baseAuthConfig,
-            contextId: defaultContext.contextId,
-            executorPublicKey:
-              defaultContext.memberPublicKey ||
-              baseAuthConfig.executorPublicKey,
-          };
-        } else {
-          authConfig = getAuthConfig();
-        }
-
+        const authConfig = getAuthConfig();
         const argsJson = { batch_id };
 
         const response = await rpcClient.execute({
@@ -561,21 +398,10 @@ export class ClientApiDataSource implements ClientApi {
   ): ApiResponse<{ result: BatchMatchResult; orders: UserOrder[] } | null> {
     try {
       if (this.app) {
-        const defaultContextService = DefaultContextService.getInstance(
-          this.app
-        );
-        const defaultContext = defaultContextService.getStoredDefaultContext();
-
-        if (!defaultContext) {
-          throw new Error(
-            "Default context not found. Please ensure you are connected to Calimero and have a default context initialized."
-          );
-        }
-
         const params = { batch_id };
 
-        const result = await this.app.execute(
-          defaultContext,
+        const result = await this.app.query(
+          this.app.getContext(),
           ClientMethod.GET_BATCH_ORDERS,
           params
         );
@@ -588,23 +414,7 @@ export class ClientApiDataSource implements ClientApi {
           error: null,
         };
       } else {
-        const defaultContextService = DefaultContextService.getInstance(null);
-        const defaultContext = defaultContextService.getStoredDefaultContext();
-
-        let authConfig;
-        if (defaultContext) {
-          const baseAuthConfig = getAuthConfig();
-          authConfig = {
-            ...baseAuthConfig,
-            contextId: defaultContext.contextId,
-            executorPublicKey:
-              defaultContext.memberPublicKey ||
-              baseAuthConfig.executorPublicKey,
-          };
-        } else {
-          authConfig = getAuthConfig();
-        }
-
+        const authConfig = getAuthConfig();
         const argsJson = { batch_id };
 
         const response = await rpcClient.execute({
@@ -637,19 +447,8 @@ export class ClientApiDataSource implements ClientApi {
   async getMode(): ApiResponse<OperatingMode> {
     try {
       if (this.app) {
-        const defaultContextService = DefaultContextService.getInstance(
-          this.app
-        );
-        const defaultContext = defaultContextService.getStoredDefaultContext();
-
-        if (!defaultContext) {
-          throw new Error(
-            "Default context not found. Please ensure you are connected to Calimero and have a default context initialized."
-          );
-        }
-
-        const result = await this.app.execute(
-          defaultContext,
+        const result = await this.app.query(
+          this.app.getContext(),
           ClientMethod.GET_MODE,
           {}
         );
@@ -659,22 +458,7 @@ export class ClientApiDataSource implements ClientApi {
           error: null,
         };
       } else {
-        const defaultContextService = DefaultContextService.getInstance(null);
-        const defaultContext = defaultContextService.getStoredDefaultContext();
-
-        let authConfig;
-        if (defaultContext) {
-          const baseAuthConfig = getAuthConfig();
-          authConfig = {
-            ...baseAuthConfig,
-            contextId: defaultContext.contextId,
-            executorPublicKey:
-              defaultContext.memberPublicKey ||
-              baseAuthConfig.executorPublicKey,
-          };
-        } else {
-          authConfig = getAuthConfig();
-        }
+        const authConfig = getAuthConfig();
 
         const response = await rpcClient.execute({
           ...authConfig,
