@@ -92,7 +92,8 @@ export interface ClientApi {
     expected_price: string,
     expected_exchange_token: string,
     spread: number,
-    time_limit: number
+    time_limit: number,
+    targetContextId?: string
   ): ApiResponse<string>;
 
   cancelOrder(user_id: UserId, order_id: string): ApiResponse<void>;

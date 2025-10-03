@@ -3,6 +3,7 @@ import {
   type RpcQueryParams,
   rpcClient,
   getAuthConfig,
+  getAppEndpointKey,
 } from "@calimero-network/calimero-client";
 import type {
   ClientApi,
@@ -35,6 +36,20 @@ function getErrorMessage(error: unknown): string {
   if (typeof err?.message === "string") return err.message;
   if (err?.data) return JSON.stringify(err.data);
   return "An unexpected error occurred";
+}
+
+function getContextSpecificAuthConfig(
+  agreementContextID: string,
+  agreementContextUserID: string
+) {
+  const baseAuthConfig = getAuthConfig();
+  return {
+    appEndpointKey: getAppEndpointKey(),
+    contextId: agreementContextID,
+    executorPublicKey: agreementContextUserID,
+    jwtToken: baseAuthConfig.jwtToken,
+    error: null,
+  };
 }
 
 interface CalimeroApp {
@@ -72,87 +87,50 @@ export class ClientApiDataSource implements ClientApi {
     expected_price: string,
     expected_exchange_token: string,
     spread: number,
-    time_limit: number
+    time_limit: number,
+    targetContextId?: string, // Optional: specify which context to submit to
+    targetUserId?: string // Optional: specify which user ID to use for authentication
   ): ApiResponse<string> {
     try {
-      if (this.app) {
-        const defaultContextService = DefaultContextService.getInstance(
-          this.app
-        );
-        const defaultContext = defaultContextService.getStoredDefaultContext();
+      // Determine auth config based on whether we're targeting a specific context
+      const authConfig =
+        targetContextId && targetUserId
+          ? getContextSpecificAuthConfig(targetContextId, targetUserId)
+          : getAuthConfig();
 
-        if (!defaultContext) {
-          throw new Error(
-            "Default context not found. Please ensure you are connected to Calimero and have a default context initialized."
-          );
-        }
+      const argsJson = {
+        user_id,
+        commitment,
+        token_deposited,
+        amount_deposited: parseInt(amount_deposited, 10),
+        escrow_confirmed,
+        vechain_address,
+        expected_price: parseInt(expected_price, 10),
+        expected_exchange_token,
+        spread,
+        time_limit,
+      };
 
-        const params = {
-          user_id,
-          commitment,
-          token_deposited,
-          amount_deposited: parseInt(amount_deposited, 10),
-          escrow_confirmed,
-          vechain_address,
-          expected_price: parseInt(expected_price, 10),
-          expected_exchange_token,
-          spread,
-          time_limit,
-        };
+      console.info("🔐 submitOrder RPC params:", {
+        contextId: authConfig.contextId,
+        executorPublicKey: authConfig.executorPublicKey,
+        method: ClientMethod.SUBMIT_ORDER,
+        targetContextId,
+        targetUserId,
+        user_id,
+      });
 
-        const result = await this.app.execute(
-          defaultContext,
-          ClientMethod.SUBMIT_ORDER,
-          params
-        );
+      const response = await rpcClient.execute({
+        ...authConfig,
+        method: ClientMethod.SUBMIT_ORDER,
+        argsJson,
+        config: RequestConfig,
+      } as unknown as RpcQueryParams<string>);
 
-        return {
-          data: (result.data || result) as string,
-          error: null,
-        };
-      } else {
-        const defaultContextService = DefaultContextService.getInstance(null);
-        const defaultContext = defaultContextService.getStoredDefaultContext();
-
-        let authConfig;
-        if (defaultContext) {
-          const baseAuthConfig = getAuthConfig();
-          authConfig = {
-            ...baseAuthConfig,
-            contextId: defaultContext.contextId,
-            executorPublicKey:
-              defaultContext.memberPublicKey ||
-              baseAuthConfig.executorPublicKey,
-          };
-        } else {
-          authConfig = getAuthConfig();
-        }
-
-        const argsJson = {
-          user_id,
-          commitment,
-          token_deposited,
-          amount_deposited: parseInt(amount_deposited, 10),
-          escrow_confirmed,
-          vechain_address,
-          expected_price: parseInt(expected_price, 10),
-          expected_exchange_token,
-          spread,
-          time_limit,
-        };
-
-        const response = await rpcClient.execute({
-          ...authConfig,
-          method: ClientMethod.SUBMIT_ORDER,
-          argsJson,
-          config: RequestConfig,
-        } as unknown as RpcQueryParams<string>);
-
-        return {
-          data: response.result as string,
-          error: null,
-        };
-      }
+      return {
+        data: response.result as string,
+        error: null,
+      };
     } catch (error: unknown) {
       console.error("ClientApiDataSource: Error in submitOrder:", error);
       return {

@@ -38,9 +38,14 @@ export default function TradeTab({ app }: TradeTabProps) {
   const [timeLimit, setTimeLimit] = useState("3600");
   const [poolMode, setPoolMode] = useState<"auto" | "manual">("auto");
   const [selectedPool, setSelectedPool] = useState("pool-1");
-  const [manualPoolContextId, setManualPoolContextId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userId, setUserId] = useState<string | undefined>(undefined);
+
+  // Manual mode states
+  const [generatedIdentity, setGeneratedIdentity] = useState<string>("");
+  const [isGeneratingIdentity, setIsGeneratingIdentity] = useState(false);
+  const [invitationPayloadInput, setInvitationPayloadInput] =
+    useState<string>("");
 
   const { toast } = useToast();
   const { account } = useWallet();
@@ -64,23 +69,23 @@ export default function TradeTab({ app }: TradeTabProps) {
   // TODO: Replace with real pool contexts from discovery service
   // For now, using the default context as a test pool
   // In production, each pool will have its own context ID
-  const defaultContextId = "FnBCkKz1jpjoQgYSZoQ8nNyVv9u4y7wmtnwgkddCn4QP";
+  const poolContextId = "FnBCkKz1jpjoQgYSZoQ8nNyVv9u4y7wmtnwgkddCn4QP"; // Matching pool context
 
   const availablePools = [
     {
       id: "pool-1",
       name: "B3TR/VTHO Pool (Test)",
-      contextId: defaultContextId || "",
+      contextId: poolContextId || "",
     },
     {
       id: "pool-2",
       name: "VET/VTHO Pool (Test)",
-      contextId: defaultContextId || "",
+      contextId: poolContextId || "",
     },
     {
       id: "pool-3",
       name: "B3TR/VET Pool (Test)",
-      contextId: defaultContextId || "",
+      contextId: poolContextId || "",
     },
   ];
 
@@ -172,6 +177,47 @@ export default function TradeTab({ app }: TradeTabProps) {
     signerAccountAddress: account?.address ?? "",
   });
 
+  const handleGenerateIdentity = async () => {
+    setIsGeneratingIdentity(true);
+    try {
+      const identityResponse = await nodeApi.createIdentity();
+
+      if (identityResponse.error || !identityResponse.data) {
+        throw new Error(
+          identityResponse.error?.message || "Failed to generate identity"
+        );
+      }
+
+      const newIdentity = identityResponse.data.publicKey;
+      setGeneratedIdentity(newIdentity);
+
+      toast({
+        variant: "success",
+        title: "Identity Generated",
+        description: (
+          <div className="space-y-2">
+            <p>New identity created successfully!</p>
+            <div className="flex items-center gap-2 bg-background/50 rounded p-2">
+              <span className="text-xs font-mono truncate">{newIdentity}</span>
+            </div>
+          </div>
+        ),
+      });
+    } catch (error) {
+      console.error("Error generating identity:", error);
+      toast({
+        variant: "destructive",
+        title: "Identity Generation Failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to generate identity",
+      });
+    } finally {
+      setIsGeneratingIdentity(false);
+    }
+  };
+
   const handleSubmitOrder = async () => {
     // Step 1: Validation
     if (!userId) {
@@ -213,52 +259,28 @@ export default function TradeTab({ app }: TradeTabProps) {
       return;
     }
 
-    // Determine pool context ID (for future use with dynamic pool selection)
-    // Currently using hardcoded trade context ID in the invitation step
-    let poolContextId: string = "";
+    // Validate manual mode requirements
     if (poolMode === "manual") {
-      if (selectedPool === "custom") {
-        if (!manualPoolContextId.trim()) {
-          toast({
-            variant: "destructive",
-            title: "Validation Error",
-            description: "Please enter a pool context ID",
-          });
-          return;
-        }
-        poolContextId = manualPoolContextId.trim();
-      } else {
-        const selectedPoolData = availablePools.find(
-          (p) => p.id === selectedPool
-        );
-        if (!selectedPoolData) {
-          toast({
-            variant: "destructive",
-            title: "Pool Not Found",
-            description: "Selected pool not found",
-          });
-          return;
-        }
-        poolContextId = selectedPoolData.contextId;
-      }
-    } else {
-      // Auto mode - use selected pool from dropdown
-      const selectedPoolData = availablePools.find(
-        (p) => p.id === selectedPool
-      );
-      if (!selectedPoolData) {
+      if (!generatedIdentity) {
         toast({
           variant: "destructive",
-          title: "Pool Not Found",
-          description: "Selected pool not found",
+          title: "Validation Error",
+          description: "Please generate an identity first in manual mode",
         });
         return;
       }
-      poolContextId = selectedPoolData.contextId;
+      if (!invitationPayloadInput.trim()) {
+        toast({
+          variant: "destructive",
+          title: "Validation Error",
+          description: "Please enter the invitation payload in manual mode",
+        });
+        return;
+      }
     }
 
-    // Log selected pool (for future dynamic pool selection)
-    console.log("Selected pool context ID (for reference):", poolContextId);
+    // Note: Pool context ID is determined from the invitation payload
+    console.log("Selected pool mode:", poolMode);
 
     setIsSubmitting(true);
 
@@ -305,92 +327,120 @@ export default function TradeTab({ app }: TradeTabProps) {
       console.info("🔗 Mock transaction hash:", txHash);
       console.info("🎉 Step 1 Complete! Moving to identity generation...");
 
-      // Step 3: Generate new identity for pool context
-      // Using default context ID and user ID
-      toast({
-        variant: "loading",
-        title: "Step 2/5: Generating Identity",
-        description: (
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Creating new identity for pool context...</span>
-          </div>
-        ),
-      });
+      // Step 3: Handle identity and invitation based on pool mode
+      let poolIdentity: string;
+      let invitationPayload: string;
 
-      console.info(
-        "🔐 Generating identity with default context:",
-        defaultContextId
-      );
-      console.info("Using user ID:", userId);
+      if (poolMode === "manual") {
+        // Manual mode: use pre-generated identity and provided invitation payload
+        if (!generatedIdentity) {
+          throw new Error("Please generate an identity first");
+        }
+        if (!invitationPayloadInput.trim()) {
+          throw new Error("Please enter the invitation payload");
+        }
 
-      const identityResponse = await nodeApi.createIdentity();
+        poolIdentity = generatedIdentity;
 
-      if (identityResponse.error || !identityResponse.data) {
-        throw new Error(
-          identityResponse.error?.message || "Failed to generate identity"
-        );
-      }
+        // Use the provided invitation payload (trim whitespace and remove quotes if present)
+        invitationPayload = invitationPayloadInput.trim();
 
-      const poolIdentity = identityResponse.data.publicKey;
-      console.info("✅ Generated pool identity:", poolIdentity);
-      console.info("🎉 Step 2 Complete! Moving to invitation creation...");
+        // Remove surrounding quotes if they exist
+        if (
+          invitationPayload.startsWith('"') &&
+          invitationPayload.endsWith('"')
+        ) {
+          invitationPayload = invitationPayload.slice(1, -1);
+        }
 
-      // Step 4: Create invitation payload
-      // Using trade context ID: FnBCkKz1jpjoQgYSZoQ8nNyVv9u4y7wmtnwgkddCn4QP
-      const tradeContextId = "FnBCkKz1jpjoQgYSZoQ8nNyVv9u4y7wmtnwgkddCn4QP";
-
-      toast({
-        variant: "loading",
-        title: "Step 3/5: Creating Invitation",
-        description: (
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Creating invitation to join trade pool...</span>
-          </div>
-        ),
-      });
-
-      // Get the inviter identity (pool admin or context owner)
-      // Using your default context identity as inviter
-      const inviterIdentity = "GRdWcgDyaR5uCdapaTX1CjHUx3hNdXA7gNJrXtoUD6dN";
-
-      console.info("🎫 Creating invitation with params:", {
-        contextId: tradeContextId,
-        invitee: poolIdentity,
-        inviter: inviterIdentity,
-      });
-
-      const invitationResponse = await nodeApi.inviteToContext({
-        contextId: tradeContextId,
-        invitee: poolIdentity,
-        inviter: inviterIdentity,
-      });
-
-      console.info("🎫 Invitation response:", invitationResponse);
-
-      if (invitationResponse.error || !invitationResponse.data) {
-        console.error("❌ Invitation failed:", {
-          error: invitationResponse.error,
-          hasData: !!invitationResponse.data,
+        toast({
+          variant: "loading",
+          title: "Step 2/3: Using Manual Identity",
+          description: (
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Using provided identity and invitation...</span>
+            </div>
+          ),
         });
-        throw new Error(
-          invitationResponse.error?.message || "Failed to create invitation"
-        );
+
+        console.info("🔐 Using manual identity:", poolIdentity);
+        console.info("📋 Using provided invitation payload");
+      } else {
+        // Auto mode: Demo flow - automatically generate identity and create invitation
+        toast({
+          variant: "loading",
+          title: "Step 2/5: Generating Identity (Demo Mode)",
+          description: (
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Creating new identity for pool context...</span>
+            </div>
+          ),
+        });
+
+        console.info("🔐 Auto mode: Generating identity (Demo)");
+        console.info("Using user ID:", userId);
+
+        const identityResponse = await nodeApi.createIdentity();
+
+        if (identityResponse.error || !identityResponse.data) {
+          throw new Error(
+            identityResponse.error?.message || "Failed to generate identity"
+          );
+        }
+
+        poolIdentity = identityResponse.data.publicKey;
+        console.info("✅ Generated pool identity:", poolIdentity);
+
+        // Demo: Create invitation payload automatically
+        const tradeContextId = "FnBCkKz1jpjoQgYSZoQ8nNyVv9u4y7wmtnwgkddCn4QP";
+
+        toast({
+          variant: "loading",
+          title: "Step 3/5: Creating Invitation (Demo Mode)",
+          description: (
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Creating invitation to join trade pool...</span>
+            </div>
+          ),
+        });
+
+        const inviterIdentity = "GRdWcgDyaR5uCdapaTX1CjHUx3hNdXA7gNJrXtoUD6dN";
+
+        console.info("🎫 Creating invitation (Demo):", {
+          contextId: tradeContextId,
+          invitee: poolIdentity,
+          inviter: inviterIdentity,
+        });
+
+        const invitationResponse = await nodeApi.inviteToContext({
+          contextId: tradeContextId,
+          invitee: poolIdentity,
+          inviter: inviterIdentity,
+        });
+
+        if (invitationResponse.error || !invitationResponse.data) {
+          throw new Error(
+            invitationResponse.error?.message || "Failed to create invitation"
+          );
+        }
+
+        invitationPayload = invitationResponse.data;
+        console.info("✅ Demo: Invitation payload created");
       }
 
-      const invitationPayload = invitationResponse.data;
-      console.info("✅ Generated invitation payload for pool");
-      console.info("🎉 Step 3 Complete! Moving to context join...");
-
-      // Step 5: Join pool context with new identity
+      // Step 4: Join pool context with identity using invitation payload
       toast({
         variant: "loading",
-        title: "Step 4/5: Joining Pool Context",
+        title: `Step ${
+          poolMode === "manual" ? "3" : "4"
+        }/5: Joining Pool Context`,
         description: (
           <div className="flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Joining pool context with order...</span>
+            <span>Joining pool context with invitation...</span>
           </div>
         ),
       });
@@ -399,30 +449,35 @@ export default function TradeTab({ app }: TradeTabProps) {
         invitationPayload: invitationPayload,
       });
 
+      console.info(
+        "🔍 Join Context Full Response:",
+        JSON.stringify(joinResponse, null, 2)
+      );
+
       if (joinResponse.error || !joinResponse.data) {
+        console.error("❌ Failed to join context:", joinResponse.error);
         throw new Error(
           joinResponse.error?.message || "Failed to join pool context"
         );
       }
 
       const { contextId: joinedContextId, memberPublicKey } = joinResponse.data;
-      console.info("Successfully joined pool context:", {
+      console.info("✅ Successfully joined pool context:", {
         contextId: joinedContextId,
         memberPublicKey,
+        poolIdentity,
+        poolContextId, // Log the target pool context ID
       });
 
-      // Step 6: Submit order to pool context
-      toast({
-        variant: "loading",
-        title: "Step 5/5: Submitting Order",
-        description: (
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Submitting order to pool context...</span>
-          </div>
-        ),
-      });
+      // Verify we joined the correct context
+      if (joinedContextId !== poolContextId) {
+        console.warn("⚠️  Joined context ID doesn't match pool context ID!", {
+          expected: poolContextId,
+          actual: joinedContextId,
+        });
+      }
 
+      // Prepare order data
       const amountDepositedWei = ethers.parseEther(amountIn).toString();
       const effectivePrice =
         priceMode === "market" ? marketPrice : parseFloat(customPrice);
@@ -440,8 +495,28 @@ export default function TradeTab({ app }: TradeTabProps) {
         timeLimit: parseInt(timeLimit, 10),
       });
 
-      const response = await api.submitOrder(
-        memberPublicKey, // Use pool context identity
+      // Step 5: Submit order to user's private context (for personal tracking)
+      toast({
+        variant: "loading",
+        title: `Step ${
+          poolMode === "manual" ? "4" : "5"
+        }/6: Recording in Private Context`,
+        description: (
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Recording order in your private context...</span>
+          </div>
+        ),
+      });
+
+      console.info(
+        "📝 Submitting order to user's private context (default context)"
+      );
+      const userPrivateContextId =
+        localStorage.getItem("defaultContextId") || "";
+
+      const privateResponse = await api.submitOrder(
+        userId!, // User's default context identity
         commitment,
         tokenIn,
         amountDepositedWei,
@@ -450,11 +525,93 @@ export default function TradeTab({ app }: TradeTabProps) {
         expectedPriceWei,
         tokenOut,
         Math.round(spread[0] * 100),
-        parseInt(timeLimit, 10)
+        parseInt(timeLimit, 10),
+        userPrivateContextId,
+        userId
+      );
+
+      console.info(
+        "📋 Private Context Response:",
+        JSON.stringify(privateResponse, null, 2)
+      );
+
+      let privateOrderId = "Unknown";
+      if (privateResponse.error) {
+        console.warn(
+          "Failed to record in private context:",
+          privateResponse.error.message
+        );
+      } else {
+        // Parse private order ID
+        const privateData = privateResponse.data;
+        if (typeof privateData === "string") {
+          privateOrderId = privateData;
+        } else if (typeof privateData === "object" && privateData !== null) {
+          const dataObj = privateData as Record<string, unknown>;
+          if (dataObj.output) {
+            privateOrderId = String(dataObj.output);
+          } else if (dataObj.result) {
+            privateOrderId = String(dataObj.result);
+          }
+        }
+        console.info(
+          "✅ Order recorded in private context, ID:",
+          privateOrderId
+        );
+      }
+
+      // Step 6: Submit order to matching pool context (for matching)
+      toast({
+        variant: "loading",
+        title: `Step ${
+          poolMode === "manual" ? "5" : "6"
+        }/6: Submitting to Pool`,
+        description: (
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Submitting order to matching pool...</span>
+          </div>
+        ),
+      });
+
+      console.info("🏊 Submitting order to matching pool context with:", {
+        identity: memberPublicKey,
+        contextId: poolContextId,
+        joinedContextId,
+      });
+
+      const response = await api.submitOrder(
+        memberPublicKey, // Pool context identity (critical for matching)
+        commitment,
+        tokenIn,
+        amountDepositedWei,
+        true, // escrow_confirmed = true (we have deposit tx)
+        account.address,
+        expectedPriceWei,
+        tokenOut,
+        Math.round(spread[0] * 100),
+        parseInt(timeLimit, 10),
+        poolContextId,
+        memberPublicKey
+      );
+
+      console.info(
+        "📋 Pool Context Response:",
+        JSON.stringify(response, null, 2)
       );
 
       if (response.error) {
-        throw new Error(response.error.message || "Failed to submit order");
+        console.error("❌ Pool submission failed:", {
+          error: response.error,
+          usedIdentity: memberPublicKey,
+          targetContext: poolContextId,
+          joinedContext: joinedContextId,
+        });
+        throw new Error(
+          `Failed to submit order to pool: ${
+            response.error.message || JSON.stringify(response.error)
+          }`
+        );
       }
 
       const responseData = response.data;
@@ -503,10 +660,10 @@ export default function TradeTab({ app }: TradeTabProps) {
             <p className="text-xs opacity-90">✅ Generated pool identity</p>
             <p className="text-xs opacity-90">✅ Joined pool context</p>
             <p className="text-xs opacity-90">
-              ✅ Order submitted to matching pool
+              ✅ Order recorded in private context
             </p>
             <p className="text-xs opacity-90">
-              ✅ Order event stored in default context
+              ✅ Order submitted to matching pool
             </p>
             <a
               href={`https://explore-testnet.vechain.org/transactions/${txHash}`}
@@ -822,51 +979,95 @@ export default function TradeTab({ app }: TradeTabProps) {
               </div>
               {poolMode === "manual" && (
                 <div className="space-y-3">
+                  {/* Generate Identity Button */}
                   <div>
                     <Label className="text-xs text-muted-foreground mb-2 block">
-                      Select Pool or Enter Context ID
+                      Step 1: Generate Identity
                     </Label>
-                    <Select
-                      value={selectedPool}
-                      onValueChange={setSelectedPool}
+                    <Button
+                      onClick={handleGenerateIdentity}
+                      disabled={isGeneratingIdentity}
+                      className="w-full h-10"
+                      variant="outline"
                     >
-                      <SelectTrigger className="h-10">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availablePools.map((pool) => (
-                          <SelectItem key={pool.id} value={pool.id}>
-                            {pool.name}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="custom">
-                          Custom Context ID
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                      {isGeneratingIdentity ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        "Generate New Identity"
+                      )}
+                    </Button>
                   </div>
-                  {selectedPool === "custom" && (
+
+                  {/* Display Generated Identity */}
+                  {generatedIdentity && (
                     <div>
                       <Label className="text-xs text-muted-foreground mb-2 block">
-                        Pool Context ID
+                        Generated Identity
                       </Label>
-                      <Input
-                        value={manualPoolContextId}
-                        onChange={(e) => setManualPoolContextId(e.target.value)}
-                        placeholder="Enter pool context ID"
-                        className="h-10"
-                      />
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={generatedIdentity}
+                          readOnly
+                          className="h-10 font-mono text-xs"
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-10 px-3"
+                          onClick={() => {
+                            navigator.clipboard.writeText(generatedIdentity);
+                            toast({
+                              title: "Copied!",
+                              description: "Identity copied to clipboard",
+                            });
+                          }}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Share this identity with the pool admin to get an
+                        invitation
+                      </p>
                     </div>
                   )}
+
+                  {/* Invitation Payload Input */}
+                  <div>
+                    <Label className="text-xs text-muted-foreground mb-2 block">
+                      Step 2: Enter Invitation Payload
+                    </Label>
+                    <textarea
+                      value={invitationPayloadInput}
+                      onChange={(e) =>
+                        setInvitationPayloadInput(e.target.value)
+                      }
+                      placeholder="Paste invitation payload from pool admin here..."
+                      className="w-full h-24 p-3 text-xs font-mono bg-background border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Get this from the pool admin after sharing your identity
+                    </p>
+                  </div>
                 </div>
               )}
               {poolMode === "auto" && (
                 <div>
                   <Label className="text-xs text-muted-foreground mb-2 block">
-                    Available Pools
+                    Demo Mode
                   </Label>
+                  <div className="p-3 bg-muted/50 border border-border rounded-lg">
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Auto Mode (Demo):</strong> Automatically generates
+                      identity and creates invitation for testing purposes. Use
+                      Manual mode for production.
+                    </p>
+                  </div>
                   <Select value={selectedPool} onValueChange={setSelectedPool}>
-                    <SelectTrigger className="h-10">
+                    <SelectTrigger className="h-10 mt-3">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -877,9 +1078,6 @@ export default function TradeTab({ app }: TradeTabProps) {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Best pool will be selected based on your trade parameters
-                  </p>
                 </div>
               )}
             </div>
