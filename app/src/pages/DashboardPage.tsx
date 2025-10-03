@@ -1,17 +1,80 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useCalimero } from "@calimero-network/calimero-client";
 import DashboardNav from "@/components/dashboard/DashboardNav";
 import TradeTab from "@/components/dashboard/TradeTab";
 import OrderHistoryTab from "@/components/dashboard/OrderHistoryTab";
 import PoolsTab from "@/components/dashboard/PoolsTab";
+import AdminPoolDashboard from "@/components/dashboard/AdminPoolDashboard";
+import { ClientApiDataSource } from "@/api/datasource/ClientApiDataSource";
+import { OperatingMode, type PoolConfig } from "@/api/clientApi";
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<"trade" | "history" | "pools">(
     "trade"
   );
+  const [showAdminDashboard, setShowAdminDashboard] = useState(false);
+  const [poolConfig, setPoolConfig] = useState<PoolConfig | null>(null);
 
   const { app } = useCalimero();
+
+  useEffect(() => {
+    async function checkMode() {
+      if (!app) {
+        return;
+      }
+
+      try {
+        const api = new ClientApiDataSource(app as never);
+        const modeResponse = await api.getMode();
+
+        let mode: string | OperatingMode | null | undefined = modeResponse.data;
+        if (mode && typeof mode === "object" && "result" in mode) {
+          mode = (mode as { result: string }).result as OperatingMode;
+        }
+
+        if (
+          mode &&
+          (mode === OperatingMode.MatchingPool || mode === "MatchingPool")
+        ) {
+          const configResponse = await api.getPoolConfig();
+
+          let config: PoolConfig | null | undefined =
+            configResponse.data as PoolConfig;
+
+          if (config && typeof config === "object") {
+            if (
+              "result" in config &&
+              config.result &&
+              typeof config.result === "object"
+            ) {
+              const result = config.result as Record<string, unknown>;
+              if ("output" in result) {
+                config = result.output as PoolConfig;
+              } else {
+                config = result as unknown as PoolConfig;
+              }
+            } else if ("output" in config) {
+              config = (config as Record<string, unknown>).output as PoolConfig;
+            }
+          }
+
+          if (config) {
+            setPoolConfig(config as PoolConfig);
+          } else {
+            console.error(
+              "❌ No pool config data found:",
+              configResponse.error
+            );
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error checking mode:", error);
+      }
+    }
+
+    checkMode();
+  }, [app]);
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -78,19 +141,39 @@ export default function DashboardPage() {
 
       {/* Content */}
       <div className="relative z-10">
-        <DashboardNav
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          app={app}
-        />
-
-        <main className="pt-20 pb-12 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            {activeTab === "trade" && <TradeTab app={app} />}
-            {activeTab === "history" && <OrderHistoryTab app={app} />}
-            {activeTab === "pools" && <PoolsTab />}
+        {showAdminDashboard && poolConfig && app ? (
+          <div className="pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+              <AdminPoolDashboard
+                app={app as never}
+                poolConfig={poolConfig}
+                onBack={() => setShowAdminDashboard(false)}
+              />
+            </div>
           </div>
-        </main>
+        ) : (
+          <>
+            <DashboardNav
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              app={app}
+            />
+
+            <main className="pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+              <div className="max-w-7xl mx-auto">
+                {activeTab === "trade" && <TradeTab app={app} />}
+                {activeTab === "history" && <OrderHistoryTab app={app} />}
+                {activeTab === "pools" && (
+                  <PoolsTab
+                    app={app as never}
+                    poolConfig={poolConfig}
+                    onNavigateToAdmin={() => setShowAdminDashboard(true)}
+                  />
+                )}
+              </div>
+            </main>
+          </>
+        )}
       </div>
     </div>
   );
