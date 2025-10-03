@@ -1,6 +1,7 @@
 import type {
   CreateContextProps,
   CreateContextResponse,
+  CreateIdentityResponse,
   InviteToContextProps,
   JoinContextProps,
   JoinContextResponse,
@@ -97,6 +98,47 @@ export class ContextApiDataSource implements NodeApi {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to fetch context data";
+
+      return {
+        data: undefined,
+        error: {
+          code: 500,
+          message: errorMessage,
+        },
+      };
+    }
+  }
+
+  async createIdentity(): ApiResponse<CreateIdentityResponse> {
+    try {
+      const result = await apiClient.node().createNewIdentity();
+
+      if (result.error) {
+        throw new Error(result.error.message || "Failed to create identity");
+      }
+
+      if (!result.data) {
+        throw new Error("No identity data received");
+      }
+
+      const identity = result.data as unknown as Record<string, unknown>;
+      const publicKey =
+        (identity.publicKey as string) ||
+        (identity.id as string) ||
+        JSON.stringify(identity);
+
+      return {
+        data: {
+          publicKey,
+          id: identity.id as string | undefined,
+        },
+        error: null,
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An unexpected error occurred during createIdentity";
 
       return {
         data: undefined,

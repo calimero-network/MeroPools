@@ -1,5 +1,5 @@
-import type { ApiResponse } from '@calimero-network/calimero-client';
-import type { UserId } from './clientApi';
+import type { ApiResponse } from "@calimero-network/calimero-client";
+import type { UserId } from "./clientApi";
 
 export interface CreateContextProps {
   is_private: boolean;
@@ -36,9 +36,15 @@ export interface VerifyContextResponse {
   joined: boolean;
 }
 
+export interface CreateIdentityResponse {
+  publicKey: string;
+  id?: string;
+}
+
 export interface NodeApi {
   createContext(props: CreateContextProps): ApiResponse<CreateContextResponse>;
   inviteToContext(props: InviteToContextProps): ApiResponse<string>;
   joinContext(props: JoinContextProps): ApiResponse<JoinContextResponse>;
   verifyContext(props: VerifyContextProps): ApiResponse<VerifyContextResponse>;
+  createIdentity(): ApiResponse<CreateIdentityResponse>;
 }
