@@ -63,7 +63,6 @@ export class ClientApiDataSource implements ClientApi {
   }
 
   async submitOrder(
-    user_id: UserId,
     commitment: OrderCommitment,
     token_deposited: string,
     amount_deposited: string,
@@ -88,7 +87,6 @@ export class ClientApiDataSource implements ClientApi {
         }
 
         const params = {
-          user_id,
           commitment,
           token_deposited,
           amount_deposited: parseInt(amount_deposited, 10),
@@ -129,7 +127,6 @@ export class ClientApiDataSource implements ClientApi {
         }
 
         const argsJson = {
-          user_id,
           commitment,
           token_deposited,
           amount_deposited: parseInt(amount_deposited, 10),
@@ -165,7 +162,7 @@ export class ClientApiDataSource implements ClientApi {
     }
   }
 
-  async cancelOrder(user_id: UserId, order_id: string): ApiResponse<void> {
+  async cancelOrder(order_id: string): ApiResponse<void> {
     try {
       if (this.app) {
         const defaultContextService = DefaultContextService.getInstance(
@@ -179,7 +176,7 @@ export class ClientApiDataSource implements ClientApi {
           );
         }
 
-        const params = { user_id, order_id };
+        const params = { order_id };
 
         await this.app.execute(
           defaultContext,
@@ -209,7 +206,7 @@ export class ClientApiDataSource implements ClientApi {
           authConfig = getAuthConfig();
         }
 
-        const argsJson = { user_id, order_id };
+        const argsJson = { order_id };
 
         await rpcClient.execute({
           ...authConfig,
@@ -235,7 +232,7 @@ export class ClientApiDataSource implements ClientApi {
     }
   }
 
-  async joinMatchingPool(user_id: UserId): ApiResponse<void> {
+  async joinMatchingPool(): ApiResponse<void> {
     try {
       if (this.app) {
         const defaultContextService = DefaultContextService.getInstance(
@@ -252,7 +249,7 @@ export class ClientApiDataSource implements ClientApi {
         await this.app.execute(
           defaultContext,
           ClientMethod.JOIN_MATCHING_POOL,
-          { user_id }
+          {}
         );
 
         return {
@@ -280,7 +277,7 @@ export class ClientApiDataSource implements ClientApi {
         await rpcClient.execute({
           ...authConfig,
           method: ClientMethod.JOIN_MATCHING_POOL,
-          argsJson: { user_id },
+          argsJson: {},
           config: RequestConfig,
         } as unknown as RpcQueryParams<void>);
 
