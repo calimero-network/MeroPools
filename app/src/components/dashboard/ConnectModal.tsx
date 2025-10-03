@@ -1,20 +1,16 @@
-"use client";
+"use client"
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Shield, Wallet, Check } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Shield, Wallet, Check } from "lucide-react"
 
 interface ConnectModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  isCalimeroConnected: boolean;
-  isVeChainConnected: boolean;
-  onCalimeroConnect: () => void;
-  onVeChainConnect: () => void;
+  isOpen: boolean
+  onClose: () => void
+  isCalimeroConnected: boolean
+  isVeChainConnected: boolean
+  onCalimeroConnect: () => void
+  onVeChainConnect: () => void
 }
 
 export default function ConnectModal({
@@ -29,17 +25,15 @@ export default function ConnectModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">
-            Connect Services
-          </DialogTitle>
+          <DialogTitle className="text-2xl font-bold">Connect Services</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-3 mt-4">
           {/* Calimero Private Context */}
           <button
             onClick={() => {
-              onCalimeroConnect();
-              if (isVeChainConnected) onClose();
+              onCalimeroConnect()
+              if (isVeChainConnected) onClose()
             }}
             disabled={isCalimeroConnected}
             className="w-full p-4 bg-muted hover:bg-muted/80 border border-border rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
@@ -50,12 +44,8 @@ export default function ConnectModal({
                   <Shield className="w-6 h-6 text-primary" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-semibold text-foreground">
-                    Connect Calimero
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Private Context
-                  </p>
+                  <h3 className="font-semibold text-foreground">Connect Calimero</h3>
+                  <p className="text-sm text-muted-foreground">Private Context</p>
                 </div>
               </div>
               {isCalimeroConnected && (
@@ -69,8 +59,8 @@ export default function ConnectModal({
           {/* VeChain Wallet */}
           <button
             onClick={() => {
-              onVeChainConnect();
-              if (isCalimeroConnected) onClose();
+              onVeChainConnect()
+              if (isCalimeroConnected) onClose()
             }}
             disabled={isVeChainConnected}
             className="w-full p-4 bg-muted hover:bg-muted/80 border border-border rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
@@ -81,12 +71,8 @@ export default function ConnectModal({
                   <Wallet className="w-6 h-6 text-primary" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-semibold text-foreground">
-                    Connect VeChain
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Wallet Connection
-                  </p>
+                  <h3 className="font-semibold text-foreground">Connect VeChain</h3>
+                  <p className="text-sm text-muted-foreground">Wallet Connection</p>
                 </div>
               </div>
               {isVeChainConnected && (
@@ -105,5 +91,5 @@ export default function ConnectModal({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
