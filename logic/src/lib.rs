@@ -419,6 +419,51 @@ impl MeroPoolsState {
 
     // Query methods
 
+    /// Get pool configuration (for matching pools)
+    pub fn get_pool_config(&self) -> Option<PoolConfig> {
+        self.pool_config.clone()
+    }
+
+    /// Get all active users in the pool
+    pub fn get_active_users(&self) -> Vec<UserId> {
+        self.active_users.clone()
+    }
+
+    /// Get all active orders in the pool (for matching)
+    pub fn get_active_orders(&self) -> Vec<UserOrder> {
+        self.user_orders
+            .values()
+            .filter(|order| order.status == OrderStatus::Active && order.escrow_confirmed)
+            .cloned()
+            .collect()
+    }
+
+    /// Admin: Add user to pool (alternative to invite flow)
+    pub fn add_user_to_pool(&mut self, user_id: UserId) -> Result<(), String> {
+        if self.mode != OperatingMode::MatchingPool {
+            return Err("Can only add users to matching pools".to_string());
+        }
+
+        if !self.active_users.contains(&user_id) {
+            self.active_users.push(user_id.clone());
+
+            let pool_name = self
+                .pool_config
+                .as_ref()
+                .map(|c| c.pool_name.clone())
+                .unwrap_or_else(|| "Unknown Pool".to_string());
+
+            app::emit!(MeroPoolsEvent::UserJoinedPool {
+                user_id: user_id.clone(),
+                pool_name,
+            });
+
+            app::log!("User added to pool: {}", user_id.0);
+        }
+
+        Ok(())
+    }
+
     /// Get user's orders
     pub fn get_user_orders(&self, user_id: UserId) -> Vec<UserOrder> {
         if let Some(order_ids) = self.user_order_index.get(&user_id.0) {
