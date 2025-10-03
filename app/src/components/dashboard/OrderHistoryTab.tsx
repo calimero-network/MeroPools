@@ -46,8 +46,6 @@ export default function OrderHistoryTab({ app }: OrderHistoryTabProps) {
         const api = new ClientApiDataSource(app as never);
         const response = await api.getUserOrders(storedUserId);
 
-        console.log("getUserOrders response:", response);
-
         if (response.error) {
           setError(response.error.message || "Failed to fetch orders");
         } else {
