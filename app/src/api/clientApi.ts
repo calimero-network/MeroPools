@@ -12,6 +12,10 @@ export enum ClientMethod {
   GET_BATCH_RESULT = "get_batch_result",
   GET_BATCH_ORDERS = "get_batch_orders",
   GET_MODE = "get_mode",
+  GET_POOL_CONFIG = "get_pool_config",
+  GET_ACTIVE_USERS = "get_active_users",
+  GET_ACTIVE_ORDERS = "get_active_orders",
+  ADD_USER_TO_POOL = "add_user_to_pool",
 }
 
 export enum OperatingMode {
@@ -108,4 +112,12 @@ export interface ClientApi {
   ): ApiResponse<{ result: BatchMatchResult; orders: UserOrder[] } | null>;
 
   getMode(): ApiResponse<OperatingMode>;
+
+  getPoolConfig(): ApiResponse<PoolConfig | null>;
+
+  getActiveUsers(): ApiResponse<UserId[]>;
+
+  getActiveOrders(): ApiResponse<UserOrder[]>;
+
+  addUserToPool(user_id: UserId): ApiResponse<void>;
 }
