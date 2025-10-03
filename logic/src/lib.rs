@@ -183,7 +183,6 @@ impl MeroPoolsState {
     /// Submit a new order
     pub fn submit_order(
         &mut self,
-        user_id: UserId,
         commitment: OrderCommitment,
         token_deposited: String,
         amount_deposited: u128,
@@ -194,7 +193,8 @@ impl MeroPoolsState {
         spread: u32,
         time_limit: u64,
     ) -> Result<String, String> {
-        let caller = user_id;
+        let caller_raw = env::executor_id();
+        let caller = UserId::new(hex::encode(caller_raw));
 
         if amount_deposited == 0 {
             return Err("Amount must be > 0".to_string());
@@ -215,7 +215,7 @@ impl MeroPoolsState {
 
             // Auto-join pool if not already joined
             if !self.active_users.contains(&caller) {
-                self.join_matching_pool(caller.clone())?;
+                self.join_matching_pool()?;
             }
         }
 
@@ -264,8 +264,9 @@ impl MeroPoolsState {
     }
 
     /// Cancel an active order
-    pub fn cancel_order(&mut self, user_id: UserId, order_id: String) -> Result<(), String> {
-        let caller = user_id;
+    pub fn cancel_order(&mut self, order_id: String) -> Result<(), String> {
+        let caller_raw = env::executor_id();
+        let caller = UserId::new(hex::encode(caller_raw));
 
         if let Some(order) = self.user_orders.get_mut(&order_id) {
             if order.user_id != caller {
@@ -292,12 +293,13 @@ impl MeroPoolsState {
     }
 
     /// Join matching pool (for shared contexts)
-    pub fn join_matching_pool(&mut self, user_id: UserId) -> Result<(), String> {
+    pub fn join_matching_pool(&mut self) -> Result<(), String> {
         if self.mode != OperatingMode::MatchingPool {
             return Err("Can only join matching pools".to_string());
         }
 
-        let caller = user_id;
+        let caller_raw = env::executor_id();
+        let caller = UserId::new(hex::encode(caller_raw));
 
         if !self.active_users.contains(&caller) {
             self.active_users.push(caller.clone());

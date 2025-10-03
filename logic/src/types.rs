@@ -7,7 +7,6 @@ pub mod id {
     )]
     #[borsh(crate = "calimero_sdk::borsh")]
     #[serde(crate = "calimero_sdk::serde")]
-    #[serde(transparent)]
     pub struct UserId(pub String);
 
     impl UserId {
