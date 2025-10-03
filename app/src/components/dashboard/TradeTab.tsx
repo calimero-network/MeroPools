@@ -1,29 +1,25 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { ArrowDown, Info } from "lucide-react";
-import { motion } from "framer-motion";
+"use client"
+
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Slider } from "@/components/ui/slider"
+import { ArrowDown, Info } from "lucide-react"
+import { motion } from "framer-motion"
 
 export default function TradeTab() {
-  const [tokenIn, setTokenIn] = useState("B3TR");
-  const [tokenOut, setTokenOut] = useState("USDC");
-  const [amountIn, setAmountIn] = useState("");
-  const [priceMode, setPriceMode] = useState<"market" | "custom">("market");
-  const [customPrice, setCustomPrice] = useState("");
-  const [spread, setSpread] = useState([0.5]);
-  const [poolMode, setPoolMode] = useState<"auto" | "manual">("auto");
-  const [selectedPool, setSelectedPool] = useState("pool-1");
+  const [tokenIn, setTokenIn] = useState("B3TR")
+  const [tokenOut, setTokenOut] = useState("USDC")
+  const [amountIn, setAmountIn] = useState("")
+  const [priceMode, setPriceMode] = useState<"market" | "custom">("market")
+  const [customPrice, setCustomPrice] = useState("")
+  const [spread, setSpread] = useState([0.5])
+  const [poolMode, setPoolMode] = useState<"auto" | "manual">("auto")
+  const [selectedPool, setSelectedPool] = useState("pool-1")
 
-  const marketPrice = 1.02; // Mock market price
+  const marketPrice = 1.02 // Mock market price
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -37,9 +33,7 @@ export default function TradeTab() {
         {/* Token Input */}
         <div className="space-y-4">
           <div className="bg-muted/50 border border-border rounded-lg p-4">
-            <Label className="text-xs text-muted-foreground mb-2 block">
-              You Pay
-            </Label>
+            <Label className="text-xs text-muted-foreground mb-2 block">You Pay</Label>
             <div className="flex items-center gap-3">
               <Input
                 type="number"
@@ -70,18 +64,12 @@ export default function TradeTab() {
 
           {/* Token Output */}
           <div className="bg-muted/50 border border-border rounded-lg p-4">
-            <Label className="text-xs text-muted-foreground mb-2 block">
-              You Receive
-            </Label>
+            <Label className="text-xs text-muted-foreground mb-2 block">You Receive</Label>
             <div className="flex items-center gap-3">
               <Input
                 type="text"
                 placeholder="0.0"
-                value={
-                  amountIn
-                    ? (parseFloat(amountIn) * marketPrice).toFixed(2)
-                    : ""
-                }
+                value={amountIn ? (parseFloat(amountIn) * marketPrice).toFixed(2) : ""}
                 disabled
                 className="text-2xl font-semibold bg-transparent border-none focus-visible:ring-0 p-0"
               />
@@ -106,22 +94,14 @@ export default function TradeTab() {
             <div className="flex gap-2">
               <Button
                 variant={priceMode === "market" ? "default" : "outline"}
-                className={
-                  priceMode === "market"
-                    ? "bg-primary text-primary-foreground"
-                    : ""
-                }
+                className={priceMode === "market" ? "bg-primary text-primary-foreground" : ""}
                 onClick={() => setPriceMode("market")}
               >
                 Market Price
               </Button>
               <Button
                 variant={priceMode === "custom" ? "default" : "outline"}
-                className={
-                  priceMode === "custom"
-                    ? "bg-primary text-primary-foreground"
-                    : ""
-                }
+                className={priceMode === "custom" ? "bg-primary text-primary-foreground" : ""}
                 onClick={() => setPriceMode("custom")}
               >
                 Custom Price
@@ -129,10 +109,7 @@ export default function TradeTab() {
             </div>
             {priceMode === "market" && (
               <p className="text-sm text-muted-foreground mt-2">
-                Market Price:{" "}
-                <span className="text-primary font-semibold">
-                  ${marketPrice}
-                </span>
+                Market Price: <span className="text-primary font-semibold">${marketPrice}</span>
               </p>
             )}
             {priceMode === "custom" && (
@@ -167,28 +144,18 @@ export default function TradeTab() {
 
           {/* Pool Selection */}
           <div>
-            <Label className="text-sm font-medium mb-2 block">
-              Pool Selection
-            </Label>
+            <Label className="text-sm font-medium mb-2 block">Pool Selection</Label>
             <div className="flex gap-2 mb-3">
               <Button
                 variant={poolMode === "auto" ? "default" : "outline"}
-                className={
-                  poolMode === "auto"
-                    ? "bg-primary text-primary-foreground"
-                    : ""
-                }
+                className={poolMode === "auto" ? "bg-primary text-primary-foreground" : ""}
                 onClick={() => setPoolMode("auto")}
               >
                 Auto Select
               </Button>
               <Button
                 variant={poolMode === "manual" ? "default" : "outline"}
-                className={
-                  poolMode === "manual"
-                    ? "bg-primary text-primary-foreground"
-                    : ""
-                }
+                className={poolMode === "manual" ? "bg-primary text-primary-foreground" : ""}
                 onClick={() => setPoolMode("manual")}
               >
                 Manual
@@ -224,10 +191,10 @@ export default function TradeTab() {
       >
         <Info className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
         <p className="text-sm text-muted-foreground">
-          This trade runs inside a Calimero private context. Details remain
-          confidential until settlement on VeChain.
+          This trade runs inside a Calimero private context. Details remain confidential until
+          settlement on VeChain.
         </p>
       </motion.div>
     </div>
-  );
+  )
 }

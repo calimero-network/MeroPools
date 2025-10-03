@@ -1,22 +1,25 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { CalimeroConnectButton } from "@calimero-network/calimero-client";
-// import { useWallet } from "@vechain/vechain-kit";
+"use client"
+
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import ConnectModal from "./ConnectModal"
+import { motion } from "framer-motion"
 
 interface DashboardNavProps {
-  activeTab: "trade" | "history" | "pools";
-  setActiveTab: (tab: "trade" | "history" | "pools") => void;
+  activeTab: "trade" | "history" | "pools"
+  setActiveTab: (tab: "trade" | "history" | "pools") => void
 }
 
-export default function DashboardNav({
-  activeTab,
-  setActiveTab,
-}: DashboardNavProps) {
+export default function DashboardNav({ activeTab, setActiveTab }: DashboardNavProps) {
+  const [isConnectModalOpen, setIsConnectModalOpen] = useState(false)
+  const [isCalimeroConnected, setIsCalimeroConnected] = useState(false)
+  const [isVeChainConnected, setIsVeChainConnected] = useState(false)
+
   const tabs = [
     { id: "trade", label: "Trade" },
     { id: "history", label: "Order History" },
     { id: "pools", label: "Pools" },
-  ] as const;
+  ] as const
 
   return (
     <>
@@ -46,18 +49,12 @@ export default function DashboardNav({
                       <motion.div
                         layoutId="activeTab"
                         className="absolute inset-0 bg-primary/20 border border-primary/30 rounded-md"
-                        transition={{
-                          type: "spring",
-                          bounce: 0.2,
-                          duration: 0.6,
-                        }}
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                       />
                     )}
                     <span
                       className={`relative z-10 ${
-                        activeTab === tab.id
-                          ? "text-primary"
-                          : "text-muted-foreground"
+                        activeTab === tab.id ? "text-primary" : "text-muted-foreground"
                       }`}
                     >
                       {tab.label}
@@ -69,7 +66,24 @@ export default function DashboardNav({
 
             {/* Connect Button */}
             <div className="flex items-center gap-3">
-              <CalimeroConnectButton />
+              {isCalimeroConnected && (
+                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/30 rounded-lg">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  <span className="text-xs font-medium text-primary">Calimero</span>
+                </div>
+              )}
+              {isVeChainConnected && (
+                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/30 rounded-lg">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  <span className="text-xs font-medium text-primary">VeChain</span>
+                </div>
+              )}
+              <Button
+                onClick={() => setIsConnectModalOpen(true)}
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                Connect
+              </Button>
             </div>
           </div>
 
@@ -90,9 +104,7 @@ export default function DashboardNav({
                 )}
                 <span
                   className={`relative z-10 ${
-                    activeTab === tab.id
-                      ? "text-primary"
-                      : "text-muted-foreground"
+                    activeTab === tab.id ? "text-primary" : "text-muted-foreground"
                   }`}
                 >
                   {tab.label}
@@ -102,6 +114,15 @@ export default function DashboardNav({
           </div>
         </div>
       </nav>
+
+      <ConnectModal
+        isOpen={isConnectModalOpen}
+        onClose={() => setIsConnectModalOpen(false)}
+        isCalimeroConnected={isCalimeroConnected}
+        isVeChainConnected={isVeChainConnected}
+        onCalimeroConnect={() => setIsCalimeroConnected(true)}
+        onVeChainConnect={() => setIsVeChainConnected(true)}
+      />
     </>
-  );
+  )
 }

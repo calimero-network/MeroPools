@@ -1,3 +1,5 @@
+"use client";
+
 import { Card } from "@/components/ui/card";
 import { Shield, Zap, FileCheck, History, GitMerge } from "lucide-react";
 import { motion } from "framer-motion";

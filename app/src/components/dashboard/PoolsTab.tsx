@@ -1,15 +1,17 @@
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Zap, Clock, TrendingUp } from "lucide-react";
-import { motion } from "framer-motion";
+"use client"
+
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Zap, Clock, TrendingUp } from "lucide-react"
+import { motion } from "framer-motion"
 
 interface Pool {
-  id: string;
-  name: string;
-  pairs: string[];
-  speed: "Fast" | "Normal" | "Slow";
-  liquidity?: string;
-  activeOrders: number;
+  id: string
+  name: string
+  pairs: string[]
+  speed: "Fast" | "Normal" | "Slow"
+  liquidity?: string
+  activeOrders: number
 }
 
 const availablePools: Pool[] = [
@@ -37,7 +39,7 @@ const availablePools: Pool[] = [
     liquidity: "$450K",
     activeOrders: 0,
   },
-];
+]
 
 const userPools: Pool[] = [
   {
@@ -48,34 +50,34 @@ const userPools: Pool[] = [
     liquidity: "$1.2M",
     activeOrders: 2,
   },
-];
+]
 
 export default function PoolsTab() {
   const getSpeedIcon = (speed: string) => {
     switch (speed) {
       case "Fast":
-        return <Zap className="w-4 h-4 text-green-500" />;
+        return <Zap className="w-4 h-4 text-green-500" />
       case "Normal":
-        return <TrendingUp className="w-4 h-4 text-yellow-500" />;
+        return <TrendingUp className="w-4 h-4 text-yellow-500" />
       case "Slow":
-        return <Clock className="w-4 h-4 text-orange-500" />;
+        return <Clock className="w-4 h-4 text-orange-500" />
       default:
-        return null;
+        return null
     }
-  };
+  }
 
   const getSpeedColor = (speed: string) => {
     switch (speed) {
       case "Fast":
-        return "bg-green-500/20 text-green-500 border-green-500/30";
+        return "bg-green-500/20 text-green-500 border-green-500/30"
       case "Normal":
-        return "bg-yellow-500/20 text-yellow-500 border-yellow-500/30";
+        return "bg-yellow-500/20 text-yellow-500 border-yellow-500/30"
       case "Slow":
-        return "bg-orange-500/20 text-orange-500 border-orange-500/30";
+        return "bg-orange-500/20 text-orange-500 border-orange-500/30"
       default:
-        return "bg-muted text-muted-foreground";
+        return "bg-muted text-muted-foreground"
     }
-  };
+  }
 
   return (
     <div className="space-y-8">
@@ -107,9 +109,7 @@ export default function PoolsTab() {
 
                 <div className="space-y-3 mb-4">
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">
-                      Supported Pairs
-                    </p>
+                    <p className="text-xs text-muted-foreground mb-1">Supported Pairs</p>
                     <div className="flex flex-wrap gap-1">
                       {pool.pairs.map((pair) => (
                         <Badge key={pair} variant="outline" className="text-xs">
@@ -128,9 +128,7 @@ export default function PoolsTab() {
 
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Active Orders</span>
-                    <span className="font-semibold text-primary">
-                      {pool.activeOrders}
-                    </span>
+                    <span className="font-semibold text-primary">{pool.activeOrders}</span>
                   </div>
                 </div>
 
@@ -170,9 +168,7 @@ export default function PoolsTab() {
 
               <div className="space-y-3 mb-4">
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Supported Pairs
-                  </p>
+                  <p className="text-xs text-muted-foreground mb-1">Supported Pairs</p>
                   <div className="flex flex-wrap gap-1">
                     {pool.pairs.map((pair) => (
                       <Badge key={pair} variant="outline" className="text-xs">
@@ -198,5 +194,5 @@ export default function PoolsTab() {
         </div>
       </section>
     </div>
-  );
+  )
 }
