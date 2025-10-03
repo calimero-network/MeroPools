@@ -38,10 +38,10 @@ export interface PoolConfig {
 }
 
 export interface OrderCommitment {
-  commitment_hash: number[];
-  encrypted_payload: number[];
-  nullifier_seed: number[];
-  proof_of_funds: number[];
+  commitment_hash: number[]; 
+  encrypted_payload: number[]; 
+  nullifier_seed: number[]; 
+  proof_of_funds: number[]; s
   timestamp: number;
   expiry: number;
 }
@@ -79,7 +79,6 @@ export interface BatchMatchResult {
 
 export interface ClientApi {
   submitOrder(
-    user_id: UserId,
     commitment: OrderCommitment,
     token_deposited: string,
     amount_deposited: string,
@@ -91,9 +90,9 @@ export interface ClientApi {
     time_limit: number
   ): ApiResponse<string>;
 
-  cancelOrder(user_id: UserId, order_id: string): ApiResponse<void>;
+  cancelOrder(order_id: string): ApiResponse<void>;
 
-  joinMatchingPool(user_id: UserId): ApiResponse<void>;
+  joinMatchingPool(): ApiResponse<void>;
 
   runBatchMatching(): ApiResponse<string>;
 
