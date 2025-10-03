@@ -1,30 +1,29 @@
-import { Card } from "@/components/ui/card";
-import { Wallet, Lock, Zap } from "lucide-react";
-import { motion } from "framer-motion";
+"use client"
+
+import { Card } from "@/components/ui/card"
+import { Wallet, Lock, Zap } from "lucide-react"
+import { motion } from "framer-motion"
 
 const steps = [
   {
     icon: Wallet,
     title: "Deposit Tokens",
-    description:
-      "Securely deposit your tokens into a private Calimero context. Your funds are protected by advanced encryption.",
+    description: "Securely deposit your tokens into a private Calimero context. Your funds are protected by advanced encryption.",
     step: "01",
   },
   {
     icon: Lock,
     title: "Create Private Orders",
-    description:
-      "Set your price, spread, and time limit. Your order details remain completely private until execution.",
+    description: "Set your price, spread, and time limit. Your order details remain completely private until execution.",
     step: "02",
   },
   {
     icon: Zap,
     title: "Match & Settle",
-    description:
-      "Orders are matched via private nodes and settled instantly on VeChain's fast, eco-friendly blockchain.",
+    description: "Orders are matched via private nodes and settled instantly on VeChain's fast, eco-friendly blockchain.",
     step: "03",
   },
-];
+]
 
 export default function HowItWorks() {
   return (
@@ -85,5 +84,5 @@ export default function HowItWorks() {
         </div>
       </div>
     </section>
-  );
+  )
 }
