@@ -27,11 +27,12 @@ const config: HardhatUserConfig = {
         count: 3,
         initialIndex: 0,
       },
-      gasPayer: {
-        gasPayerServiceUrl:
-          process.env.GAS_PAYER_SERVICE_URL ||
-          "https://sponsor-testnet.vechain.energy/by/269",
-      },
+      // Gas sponsorship disabled - using deployer's VTHO for gas
+      // gasPayer: {
+      //   gasPayerServiceUrl:
+      //     process.env.GAS_PAYER_SERVICE_URL ||
+      //     "https://sponsor-testnet.vechain.energy/by/937",
+      // },
     } as any,
   },
 };

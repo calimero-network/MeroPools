@@ -19,9 +19,9 @@ The DarkPoolSettlement contract provides a secure escrow mechanism for trading E
 
 ### VeChain Testnet
 
-- **Contract Address**: `0x3cb3b2782f4cbfbaa035daab7939970563b79527`
+- **Contract Address**: `0xc45adc41c6be7d172b7841b072b90c0abb6f663f`
 - **Network**: VeChain Thor Testnet
-- **Explorer**: [View on VeChain Explorer](https://explore-testnet.vechain.org/accounts/0x3cb3b2782f4cbfbaa035daab7939970563b79527)
+- **Explorer**: [View on VeChain Explorer](https://explore-testnet.vechain.org/accounts/0xc45adc41c6be7d172b7841b072b90c0abb6f663f)
 
 ## Development Setup
 
