@@ -38,10 +38,10 @@ export interface PoolConfig {
 }
 
 export interface OrderCommitment {
-  commitment_hash: number[]; 
-  encrypted_payload: number[]; 
-  nullifier_seed: number[]; 
-  proof_of_funds: number[]; s
+  commitment_hash: string;
+  encrypted_payload: string;
+  nullifier_seed: string;
+  proof_of_funds: string;
   timestamp: number;
   expiry: number;
 }
