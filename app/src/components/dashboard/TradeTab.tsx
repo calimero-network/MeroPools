@@ -67,9 +67,8 @@ export default function TradeTab({ app }: TradeTabProps) {
   const nodeApi = new ContextApiDataSource();
 
   // TODO: Replace with real pool contexts from discovery service
-  // For now, using the default context as a test pool
-  // In production, each pool will have its own context ID
-  const poolContextId = "FnBCkKz1jpjoQgYSZoQ8nNyVv9u4y7wmtnwgkddCn4QP"; // Matching pool context
+  // Hardcoded for demo purposes
+  const poolContextId = "8NQrE4bXZk3fhdickS7E4eDZ6Xf3EieL5UhH6be7Br6r"; // Matching pool context
 
   const availablePools = [
     {
@@ -139,15 +138,14 @@ export default function TradeTab({ app }: TradeTabProps) {
             to: contractAddress as `0x${string}`,
             value: amountHex,
             data: contractInterface.encodeFunctionData("deposit", [
-              "0x0000000000000000000000000000000000000000", // address(0) for native VET
-              "0", // amount parameter ignored for native VET
+              "0x0000000000000000000000000000000000000000",
+              "0",
             ]),
             comment: `Deposit ${amount} ${token} to DarkPool escrow`,
           },
         ];
       }
 
-      // ERC20 tokens: Approve + Deposit with actual token address
       const tokenAddress = getTokenAddress(token);
 
       return [
@@ -259,7 +257,6 @@ export default function TradeTab({ app }: TradeTabProps) {
       return;
     }
 
-    // Validate manual mode requirements
     if (poolMode === "manual") {
       if (!generatedIdentity) {
         toast({
@@ -279,20 +276,15 @@ export default function TradeTab({ app }: TradeTabProps) {
       }
     }
 
-    // Note: Pool context ID is determined from the invitation payload
-    console.log("Selected pool mode:", poolMode);
-
     setIsSubmitting(true);
 
     try {
-      // Build deposit clauses
       const depositClauses = buildDepositClauses(amountIn, tokenIn);
 
       if (depositClauses.length === 0) {
         throw new Error("Failed to build deposit transaction");
       }
 
-      // Step 2: Approve and Deposit tokens to VeChain escrow
       toast({
         variant: "loading",
         title: "Step 1/5: Depositing to Escrow",
@@ -307,32 +299,23 @@ export default function TradeTab({ app }: TradeTabProps) {
         ),
       });
 
-      // Send deposit transaction
       console.info(`Sending deposit transaction`, {
         clauses: depositClauses,
         token: tokenIn,
         amount: amountIn,
       });
 
-      // Send transaction and assume success
       await sendDepositTx(depositClauses);
 
-      // Assume transaction succeeds - generate a placeholder transaction hash for testing
       const txHash = `0x${Date.now().toString(16)}${Math.random()
         .toString(16)
         .slice(2, 18)}`;
-      console.info(
-        "✅ Deposit assumed successful! Proceeding with trade creation..."
-      );
-      console.info("🔗 Mock transaction hash:", txHash);
-      console.info("🎉 Step 1 Complete! Moving to identity generation...");
 
       // Step 3: Handle identity and invitation based on pool mode
       let poolIdentity: string;
-      let invitationPayload: string;
+      let invitationPayload = "";
 
       if (poolMode === "manual") {
-        // Manual mode: use pre-generated identity and provided invitation payload
         if (!generatedIdentity) {
           throw new Error("Please generate an identity first");
         }
@@ -342,10 +325,8 @@ export default function TradeTab({ app }: TradeTabProps) {
 
         poolIdentity = generatedIdentity;
 
-        // Use the provided invitation payload (trim whitespace and remove quotes if present)
         invitationPayload = invitationPayloadInput.trim();
 
-        // Remove surrounding quotes if they exist
         if (
           invitationPayload.startsWith('"') &&
           invitationPayload.endsWith('"')
@@ -365,9 +346,6 @@ export default function TradeTab({ app }: TradeTabProps) {
         });
 
         console.info("🔐 Using manual identity:", poolIdentity);
-        console.info("📋 Using provided invitation payload");
-      } else {
-        // Auto mode: Demo flow - automatically generate identity and create invitation
         toast({
           variant: "loading",
           title: "Step 2/5: Generating Identity (Demo Mode)",
@@ -380,7 +358,6 @@ export default function TradeTab({ app }: TradeTabProps) {
         });
 
         console.info("🔐 Auto mode: Generating identity (Demo)");
-        console.info("Using user ID:", userId);
 
         const identityResponse = await nodeApi.createIdentity();
 
@@ -391,9 +368,15 @@ export default function TradeTab({ app }: TradeTabProps) {
         }
 
         poolIdentity = identityResponse.data.publicKey;
-        console.info("✅ Generated pool identity:", poolIdentity);
 
-        // Demo: Create invitation payload automatically
+        if (identityResponse.error || !identityResponse.data) {
+          throw new Error(
+            identityResponse.error?.message || "Failed to generate identity"
+          );
+        }
+
+        poolIdentity = identityResponse.data.publicKey;
+
         const tradeContextId = "FnBCkKz1jpjoQgYSZoQ8nNyVv9u4y7wmtnwgkddCn4QP";
 
         toast({
@@ -428,7 +411,6 @@ export default function TradeTab({ app }: TradeTabProps) {
         }
 
         invitationPayload = invitationResponse.data;
-        console.info("✅ Demo: Invitation payload created");
       }
 
       // Step 4: Join pool context with identity using invitation payload
@@ -449,33 +431,13 @@ export default function TradeTab({ app }: TradeTabProps) {
         invitationPayload: invitationPayload,
       });
 
-      console.info(
-        "🔍 Join Context Full Response:",
-        JSON.stringify(joinResponse, null, 2)
-      );
-
       if (joinResponse.error || !joinResponse.data) {
-        console.error("❌ Failed to join context:", joinResponse.error);
         throw new Error(
           joinResponse.error?.message || "Failed to join pool context"
         );
       }
 
       const { contextId: joinedContextId, memberPublicKey } = joinResponse.data;
-      console.info("✅ Successfully joined pool context:", {
-        contextId: joinedContextId,
-        memberPublicKey,
-        poolIdentity,
-        poolContextId, // Log the target pool context ID
-      });
-
-      // Verify we joined the correct context
-      if (joinedContextId !== poolContextId) {
-        console.warn("⚠️  Joined context ID doesn't match pool context ID!", {
-          expected: poolContextId,
-          actual: joinedContextId,
-        });
-      }
 
       // Prepare order data
       const amountDepositedWei = ethers.parseEther(amountIn).toString();
@@ -530,33 +492,10 @@ export default function TradeTab({ app }: TradeTabProps) {
         userId
       );
 
-      console.info(
-        "📋 Private Context Response:",
-        JSON.stringify(privateResponse, null, 2)
-      );
-
-      let privateOrderId = "Unknown";
       if (privateResponse.error) {
         console.warn(
           "Failed to record in private context:",
           privateResponse.error.message
-        );
-      } else {
-        // Parse private order ID
-        const privateData = privateResponse.data;
-        if (typeof privateData === "string") {
-          privateOrderId = privateData;
-        } else if (typeof privateData === "object" && privateData !== null) {
-          const dataObj = privateData as Record<string, unknown>;
-          if (dataObj.output) {
-            privateOrderId = String(dataObj.output);
-          } else if (dataObj.result) {
-            privateOrderId = String(dataObj.result);
-          }
-        }
-        console.info(
-          "✅ Order recorded in private context, ID:",
-          privateOrderId
         );
       }
 
@@ -595,18 +534,7 @@ export default function TradeTab({ app }: TradeTabProps) {
         memberPublicKey
       );
 
-      console.info(
-        "📋 Pool Context Response:",
-        JSON.stringify(response, null, 2)
-      );
-
       if (response.error) {
-        console.error("❌ Pool submission failed:", {
-          error: response.error,
-          usedIdentity: memberPublicKey,
-          targetContext: poolContextId,
-          joinedContext: joinedContextId,
-        });
         throw new Error(
           `Failed to submit order to pool: ${
             response.error.message || JSON.stringify(response.error)
