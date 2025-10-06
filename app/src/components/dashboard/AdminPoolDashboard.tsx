@@ -160,10 +160,8 @@ export default function AdminPoolDashboard({
 
     setIsGeneratingInvitation(true);
     try {
-      // Get the current pool context ID (using the trade context for now)
       const poolContextId = localStorage.getItem("defaultContextId") || "";
 
-      // Get the inviter identity (admin's identity)
       const inviterIdentity =
         localStorage.getItem("defaultContextUserID") || "";
 
@@ -185,10 +183,8 @@ export default function AdminPoolDashboard({
         );
       }
 
-      // The invitation response data is already a string, but remove any quotes if present
       let invitationPayload = invitationResponse.data.trim();
 
-      // Remove surrounding quotes if they exist
       if (
         invitationPayload.startsWith('"') &&
         invitationPayload.endsWith('"')
@@ -255,10 +251,8 @@ export default function AdminPoolDashboard({
         )}... has been added to the matching pool`,
       });
 
-      // Refresh pool data
       await loadPoolData();
 
-      // Clear form
       setInviteeId("");
       setGeneratedInvitation("");
     } catch (error) {
@@ -295,10 +289,8 @@ export default function AdminPoolDashboard({
       console.log("📦 Raw batch response:", batchResponse);
 
       if (batchResponse.data) {
-        // Handle the response data structure
         let batchData: unknown = batchResponse.data;
 
-        // Extract from nested structure: data.result or data.output
         if (typeof batchData === "object" && batchData) {
           if ("result" in batchData) {
             batchData = (batchData as { result: unknown }).result;
@@ -309,7 +301,6 @@ export default function AdminPoolDashboard({
           }
         }
 
-        // The API returns an array: [BatchMatchResult, UserOrder[]]
         if (Array.isArray(batchData) && batchData.length === 2) {
           console.log("📦 Array detected, length:", batchData.length);
           console.log("📦 First element (batch):", batchData[0]);
@@ -318,7 +309,6 @@ export default function AdminPoolDashboard({
           const [result, orders] = batchData as [BatchMatchResult, UserOrder[]];
 
           if (result && orders && result.batch_id) {
-            // Check if batch already exists
             const batchExists = matchedBatches.some(
               (b) => b.batch.batch_id === result.batch_id
             );
@@ -338,7 +328,6 @@ export default function AdminPoolDashboard({
               });
             }
 
-            // Clear input
             setBatchIdLookup("");
           } else {
             console.error("📦 Invalid batch structure:", { result, orders });
@@ -388,12 +377,10 @@ export default function AdminPoolDashboard({
         throw new Error(response.error.message);
       }
 
-      // Extract batch_id from response
       let batchId: string;
-      const responseData = response.data as
-        | string
-        | { output: string }
-        | undefined;
+      const responseData = response.data;
+
+      console.log("📦 Run matching response data:", responseData);
 
       if (typeof responseData === "string") {
         batchId = responseData;
@@ -402,14 +389,33 @@ export default function AdminPoolDashboard({
         typeof responseData === "object" &&
         "output" in responseData
       ) {
-        batchId = responseData.output;
+        const output = (responseData as { output: unknown }).output;
+        if (typeof output === "string") {
+          batchId = output;
+        } else {
+          throw new Error(
+            "Invalid batch matching response format: output is not a string"
+          );
+        }
+      } else if (
+        responseData &&
+        typeof responseData === "object" &&
+        "result" in responseData
+      ) {
+        const result = (responseData as { result: unknown }).result;
+        if (typeof result === "string") {
+          batchId = result;
+        } else {
+          throw new Error(
+            "Invalid batch matching response format: result is not a string"
+          );
+        }
       } else {
         throw new Error("Invalid batch matching response format");
       }
 
       console.log("📦 Batch ID:", batchId);
 
-      // Fetch batch details
       const batchResponse = await api.getBatchOrders(batchId);
       if (batchResponse.error) {
         throw new Error(batchResponse.error.message);
@@ -418,10 +424,8 @@ export default function AdminPoolDashboard({
       console.log("📦 Batch response:", batchResponse);
 
       if (batchResponse.data) {
-        // Handle the response data structure
         let batchData: unknown = batchResponse.data;
 
-        // Extract from nested structure: data.result or data.output
         if (typeof batchData === "object" && batchData) {
           if ("result" in batchData) {
             batchData = (batchData as { result: unknown }).result;
@@ -432,7 +436,6 @@ export default function AdminPoolDashboard({
           }
         }
 
-        // The API returns an array: [BatchMatchResult, UserOrder[]]
         if (Array.isArray(batchData) && batchData.length === 2) {
           const [result, orders] = batchData as [BatchMatchResult, UserOrder[]];
 
@@ -471,7 +474,6 @@ export default function AdminPoolDashboard({
   }
 
   async function handleSettleBatch(batchId: string) {
-    // Find the batch data
     const batchData = matchedBatches.find((b) => b.batch.batch_id === batchId);
     if (!batchData) {
       toast({
@@ -484,7 +486,6 @@ export default function AdminPoolDashboard({
 
     const { batch, orders } = batchData;
 
-    // Validate VeChain wallet connection
     if (!account?.address) {
       toast({
         variant: "destructive",
@@ -501,11 +502,9 @@ export default function AdminPoolDashboard({
         description: "Building settlement transactions...",
       });
 
-      // Build settlement clauses for all matched order pairs
       const settlementClauses = [];
 
       for (const [orderAId, orderBId] of batch.matched_orders) {
-        // Find the corresponding orders
         const orderA = orders.find((o) => o.id === orderAId);
         const orderB = orders.find((o) => o.id === orderBId);
 
@@ -514,15 +513,12 @@ export default function AdminPoolDashboard({
           continue;
         }
 
-        // Get token addresses
         const tokenAAddress = getTokenAddress(orderA.token_deposited);
         const tokenBAddress = getTokenAddress(orderB.token_deposited);
 
-        // Get VeChain addresses from orders
         const userAAddress = orderA.vechain_address;
         const userBAddress = orderB.vechain_address;
 
-        // Use the clearing price from the batch for both trades
         const clearingPriceWei = batch.clearing_price.toString();
 
         console.info("🔨 Building settlement for pair:", {
@@ -584,22 +580,16 @@ export default function AdminPoolDashboard({
         ),
       });
 
-      // Send settlement transaction(s)
       await sendTransaction(settlementClauses);
 
       console.info("✅ Settlement transaction sent successfully");
 
-      // Generate a transaction hash placeholder
-      // In a real scenario, we would get this from the transaction receipt
-      const txHash =
-        `0x${Date.now().toString(16)}${Math.random().toString(16).slice(2)}`.substring(
-          0,
-          66
-        );
+      const txHash = `0x${Date.now().toString(16)}${Math.random()
+        .toString(16)
+        .slice(2)}`.substring(0, 66);
 
       console.info("🔗 Transaction hash:", txHash);
 
-      // Submit settlement result to Calimero context
       await api.submitSettlementResult(batchId, txHash);
 
       toast({
@@ -622,7 +612,6 @@ export default function AdminPoolDashboard({
         ),
       });
 
-      // Remove settled batch from the list
       setMatchedBatches((prev) =>
         prev.filter((b) => b.batch.batch_id !== batchId)
       );
